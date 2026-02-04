@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="tl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Tracking Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        :root {
+            --pending: #ffc107;
+            --delivery: #28a745;
+            --dark: #2c3e50;
+            --accent: #3498db;
+        }
+
+        body { 
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif; 
+            background: #f0f2f5; 
+            margin: 0; 
+            padding: 20px; 
+            color: #333;
+        }
+
+        .container { 
+            max-width: 1200px; 
+            margin: auto; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        h2 { margin: 0; color: var(--dark); font-size: 24px; }
+
+        /* Controls Area */
+        .controls { 
+            display: flex; 
+            flex-wrap: wrap;
+            gap: 15px; 
+            margin-bottom: 20px; 
+            align-items: center; 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .upload-section { display: flex; align-items: center; gap: 10px; }
+        
+        #file-info {
+            font-size: 13px;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Table Container with Scrollbar */
+        .table-wrapper {
+            max-height: 500px; /* Adjust height as needed */
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        table { width: 100%; border-collapse: collapse; position: relative; }
+
+        /* Sticky Header */
+        thead th { 
+            position: sticky; 
+            top: 0; 
+            background: var(--dark); 
+            color: white; 
+            z-index: 10;
+            padding: 15px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        td { padding: 14px; border-bottom: 1px solid #eee; font-size: 14px; }
+        tr:hover { background-color: #f8fbff; }
+
+        /* Status Badges */
+        .badge { 
+            padding: 6px 12px; 
+            border-radius: 50px; 
+            font-weight: 600; 
+            font-size: 11px; 
+            text-transform: uppercase;
+            display: inline-block;
+        }
+        .status-pending { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .status-delivery { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+
+        /* Buttons */
+        button { cursor: pointer; transition: 0.2s; border: none; font-weight: 500; }
+        .btn-delete { background: #ff4757; color: white; padding: 6px 10px; border-radius: 6px; }
+        .btn-delete:hover { background: #ff6b81; }
+        .btn-status { background: var(--accent); color: white; padding: 6px 12px; border-radius: 6px; }
+        .btn-status:hover { background: #2980b9; }
+        .btn-clear { background: #6c757d; color: white; padding: 10px 15px; border-radius: 6px; }
+
+        /* Custom Scrollbar */
+        .table-wrapper::-webkit-scrollbar { width: 8px; }
+        .table-wrapper::-webkit-scrollbar-track { background: #f1f1f1; }
+        .table-wrapper::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        .table-wrapper::-webkit-scrollbar-thumb:hover { background: #999; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h2>📋 Monitoring ng mga Product</h2>
+        <button onclick="clearAll()" class="btn-clear">Clear All Data</button>
+    </header>
+    
+    <div class="controls">
+        <div class="upload-section">
+            <strong>I-upload ang PDF:</strong>
+            <input type="file" id="pdfUpload" accept=".pdf">
+            <span id="file-info">Walang file na napili</span>
+        </div>
+        <div style="margin-left: auto;">
+            <input type="checkbox" id="autoMode" checked> 
+            <label for="autoMode" style="font-size: 14px; cursor: pointer;">Auto-Extract Info</label>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>SO No.</th>
+                    <th>Pangalan</th>
+                    <th>Gamot / Product</th>
+                    <th>Processed By</th>
+                    <th>Date Submitted</th>
+                    <th>Status</th>
+                    <th>Aksyon</th>
+                </tr>
+            </thead>
+            <tbody id="productTableBody">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const tableBody = document.getElementById('productTableBody');
+    const fileInput = document.getElementById('pdfUpload');
+    const fileInfo = document.getElementById('file-info');
+
+    window.onload = displayData;
+
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        fileInfo.textContent = `File: ${file.name}`;
+        
+        const reader = new FileReader();
+        reader.onload = async function() {
+            const typedarray = new Uint8Array(this.result);
+            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+            const page = await pdf.getPage(1);
+            const textContent = await page.getTextContent();
+            const fullText = textContent.items.map(item => item.str).join(" ");
+
+            // --- SMART DETECTION LOGIC ---
+            const soMatch = fullText.match(/SO\s?(\d{4,}\/\d{2,})/i) || fullText.match(/SO#\s?(\d+)/i) || ["N/A"];
+            const dateMatch = fullText.match(/\d{2}\/\d{2}\/\d{4}/) || [new Date().toLocaleDateString()];
+            
+            // Subukan nating hanapin ang pangalan ng gamot
+            // Naghahanap ng pattern pagkatapos ng salitang "Product" o "Medicine"
+            let extractedMedicine = "Hindi mahanap";
+            const medMatch = fullText.match(/(?:Product|Medicine|Item|Desc):\s?([\w\s-]+)/i);
+            if(medMatch) extractedMedicine = medMatch[1].trim();
+
+            // Subukan nating hanapin kung sino nag-process
+            let processor = "System User";
+            const procMatch = fullText.match(/(?:Prepared by|Processed by|User):\s?([\w\s.]+)/i);
+            if(procMatch) processor = procMatch[1].trim();
+
+            const newProduct = {
+                id: Date.now(),
+                soNumber: soMatch[0],
+                name: "Client Name", // Pwedeng dagdagan ng regex para sa Client Name
+                medicine: extractedMedicine,
+                processedBy: processor,
+                dateSubmitted: dateMatch[0],
+                status: 'pending'
+            };
+
+            saveProduct(newProduct);
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    function saveProduct(product) {
+        let products = JSON.parse(localStorage.getItem('myProducts')) || [];
+        products.unshift(product); // Add new item to the TOP
+        localStorage.setItem('myProducts', JSON.stringify(products));
+        displayData();
+    }
+
+    function displayData() {
+        let products = JSON.parse(localStorage.getItem('myProducts')) || [];
+        tableBody.innerHTML = '';
+
+        if(products.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#999; padding: 40px;">Walang record na nahanap. Mag-upload ng PDF para magsimula.</td></tr>`;
+            return;
+        }
+
+        products.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${p.soNumber}</strong></td>
+                <td>${p.name}</td>
+                <td><span style="color: var(--accent); font-weight:600;">${p.medicine}</span></td>
+                <td><small>👤 ${p.processedBy}</small></td>
+                <td>${p.dateSubmitted}</td>
+                <td><span class="badge ${p.status === 'pending' ? 'status-pending' : 'status-delivery'}">${p.status}</span></td>
+                <td>
+                    <div style="display:flex; gap: 5px;">
+                        <button class="btn-status" onclick="toggleStatus(${p.id})" title="Change Status">⇄</button>
+                        <button class="btn-delete" onclick="deleteProduct(${p.id})">🗑️</button>
+                    </div>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+    }
+
+    function toggleStatus(id) {
+        let products = JSON.parse(localStorage.getItem('myProducts'));
+        products = products.map(p => {
+            if(p.id === id) {
+                p.status = p.status === 'pending' ? 'for delivery' : 'pending';
+            }
+            return p;
+        });
+        localStorage.setItem('myProducts', JSON.stringify(products));
+        displayData();
+    }
+
+    function deleteProduct(id) {
+        if(confirm('Sigurado ka bang buburahin ito?')) {
+            let products = JSON.parse(localStorage.getItem('myProducts'));
+            products = products.filter(p => p.id !== id);
+            localStorage.setItem('myProducts', JSON.stringify(products));
+            displayData();
+        }
+    }
+
+    function clearAll() {
+        if(confirm('BABALA: Mabubura lahat ng data sa listahan. Ipagpapatuloy?')) {
+            localStorage.removeItem('myProducts');
+            fileInfo.textContent = "Walang file na napili";
+            displayData();
+        }
+    }
+</script>
+
+</body>
+</html>
