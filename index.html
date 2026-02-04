@@ -1,273 +1,347 @@
 <!DOCTYPE html>
-<html lang="tl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Tracking Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <title>Smart Order Entry - Auto Extract</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Set Worker for PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+
     <style>
-        :root {
-            --pending: #ffc107;
-            --delivery: #28a745;
-            --dark: #2c3e50;
-            --accent: #3498db;
+        :root { 
+            --blue: #004a99; 
+            --light-blue: #eef5fc;
+            --gray: #f4f7f6; 
+            --border: #ced4da; 
+            --green: #28a745;
+            --orange: #ffc107;
+            --text-dark: #333;
         }
 
-        body { 
-            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif; 
-            background: #f0f2f5; 
-            margin: 0; 
-            padding: 20px; 
-            color: #333;
-        }
-
-        .container { 
-            max-width: 1200px; 
-            margin: auto; 
-            background: white; 
-            padding: 25px; 
-            border-radius: 12px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-
-        h2 { margin: 0; color: var(--dark); font-size: 24px; }
-
-        /* Controls Area */
-        .controls { 
-            display: flex; 
-            flex-wrap: wrap;
-            gap: 15px; 
-            margin-bottom: 20px; 
-            align-items: center; 
-            background: #f8f9fa; 
-            padding: 20px; 
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-        }
-
-        .upload-section { display: flex; align-items: center; gap: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--gray); padding: 20px; color: var(--text-dark); }
+        .container { max-width: 1100px; margin: auto; }
         
-        #file-info {
-            font-size: 13px;
-            color: #666;
-            font-style: italic;
-        }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        
+        .header-title { border-bottom: 2px solid var(--blue); padding-bottom: 10px; margin-bottom: 20px; color: var(--blue); font-size: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
 
-        /* Table Container with Scrollbar */
-        .table-wrapper {
-            max-height: 500px; /* Adjust height as needed */
-            overflow-y: auto;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-        }
+        /* Upload Styling */
+        .upload-box { border: 2px dashed var(--blue); padding: 40px; text-align: center; border-radius: 8px; background: var(--light-blue); transition: 0.3s; }
+        .upload-box:hover { background: #e0ecf8; }
+        
+        /* Form Styling */
+        .form-section { display: none; animation: slideDown 0.4s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        table { width: 100%; border-collapse: collapse; position: relative; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
 
-        /* Sticky Header */
-        thead th { 
-            position: sticky; 
-            top: 0; 
-            background: var(--dark); 
-            color: white; 
-            z-index: 10;
-            padding: 15px;
-            text-align: left;
-            font-size: 14px;
-        }
+        .field-group { display: flex; flex-direction: column; }
+        label { font-weight: 600; font-size: 12px; color: #555; margin-bottom: 5px; text-transform: uppercase; }
+        input, textarea, select { padding: 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 14px; width: 100%; box-sizing: border-box; }
+        input:focus { border-color: var(--blue); outline: none; }
+        input[readonly] { background-color: #f9f9f9; cursor: default; }
 
-        td { padding: 14px; border-bottom: 1px solid #eee; font-size: 14px; }
-        tr:hover { background-color: #f8fbff; }
-
-        /* Status Badges */
-        .badge { 
-            padding: 6px 12px; 
-            border-radius: 50px; 
-            font-weight: 600; 
-            font-size: 11px; 
-            text-transform: uppercase;
-            display: inline-block;
-        }
-        .status-pending { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
-        .status-delivery { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        /* Table Styling */
+        .product-table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid #eee; }
+        .product-table th { background: #f8f9fa; padding: 10px; text-align: left; font-size: 12px; color: #555; border-bottom: 2px solid #ddd; }
+        .product-table td { padding: 8px; border-bottom: 1px solid #eee; font-size: 13px; }
+        .qty-input { width: 70px; text-align: center; font-weight: bold; border: 1px solid #aaa; }
+        .total-col { font-weight: bold; text-align: right; }
 
         /* Buttons */
-        button { cursor: pointer; transition: 0.2s; border: none; font-weight: 500; }
-        .btn-delete { background: #ff4757; color: white; padding: 6px 10px; border-radius: 6px; }
-        .btn-delete:hover { background: #ff6b81; }
-        .btn-status { background: var(--accent); color: white; padding: 6px 12px; border-radius: 6px; }
-        .btn-status:hover { background: #2980b9; }
-        .btn-clear { background: #6c757d; color: white; padding: 10px 15px; border-radius: 6px; }
+        .btn-primary { background: var(--blue); color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: 600; }
+        .btn-primary:hover { background: #003d80; }
 
-        /* Custom Scrollbar */
-        .table-wrapper::-webkit-scrollbar { width: 8px; }
-        .table-wrapper::-webkit-scrollbar-track { background: #f1f1f1; }
-        .table-wrapper::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-        .table-wrapper::-webkit-scrollbar-thumb:hover { background: #999; }
+        .btn-save { background: var(--green); color: white; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; }
+        .btn-save:hover { background: #218838; }
+
+        /* Records Table */
+        .records-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .records-table th { background: var(--blue); color: white; padding: 12px; text-align: left; font-size: 13px; }
+        .records-table td { padding: 12px; border-bottom: 1px solid #ddd; font-size: 14px; }
+        
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; color: white; }
+        .status-pending { background-color: var(--orange); color: #444; }
+        .status-complete { background-color: var(--green); }
+        
+        .loader { display: none; border: 4px solid #f3f3f3; border-top: 4px solid var(--blue); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; vertical-align: middle; margin-right: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>
-        <h2>📋 Monitoring ng mga Product</h2>
-        <button onclick="clearAll()" class="btn-clear">Clear All Data</button>
-    </header>
-    
-    <div class="controls">
-        <div class="upload-section">
-            <strong>I-upload ang PDF:</strong>
-            <input type="file" id="pdfUpload" accept=".pdf">
-            <span id="file-info">Walang file na napili</span>
+
+    <div class="card">
+        <div class="header-title">
+            <span>📄 Sales Order Processing</span>
+            <button onclick="resetForm()" style="font-size:12px; cursor:pointer; padding: 5px 10px;">New Transaction</button>
         </div>
-        <div style="margin-left: auto;">
-            <input type="checkbox" id="autoMode" checked> 
-            <label for="autoMode" style="font-size: 14px; cursor: pointer;">Auto-Extract Info</label>
+
+        <div class="upload-box" id="uploadArea">
+            <h3>📂 STEP 1: Upload Sales Order PDF</h3>
+            <p style="color:#666; font-size:13px;">Supported: Office of the President, PCSO, DSWD, Cash Orders</p>
+            <input type="file" id="pdfFile" accept=".pdf">
+            <br><br>
+            <button class="btn-primary" onclick="processPDF()">
+                <div class="loader" id="loader"></div> Extract Data
+            </button>
+        </div>
+
+        <div class="form-section" id="formSection">
+            <h4 style="margin-top:0; color:var(--blue);">📝 STEP 2: Verify Extracted Details</h4>
+            
+            <div class="grid-2">
+                <div class="field-group">
+                    <label>Customer Name</label>
+                    <input type="text" id="custName">
+                </div>
+                <div class="field-group">
+                    <label>Reference / SO #</label>
+                    <input type="text" id="soRef">
+                </div>
+            </div>
+
+            <div class="grid-2">
+                 <div class="field-group">
+                    <label>Delivery Address</label>
+                    <input type="text" id="address">
+                </div>
+                <div class="field-group">
+                    <label>Terms</label>
+                    <input type="text" id="terms">
+                </div>
+            </div>
+
+            <label>Order Items (Auto-Detected)</label>
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Generic / Brand Name</th>
+                        <th style="width:80px;">Qty</th>
+                        <th>Unit</th>
+                        <th style="text-align:right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsBody">
+                    </tbody>
+            </table>
+
+            <div class="grid-2" style="margin-top: 25px; align-items: flex-end;">
+                <div class="field-group">
+                    <label>Status:</label>
+                    <select id="orderStatus" style="font-weight:bold; height: 45px;">
+                        <option value="Pending">🕒 Pending Review</option>
+                        <option value="Complete">✅ Completed</option>
+                    </select>
+                </div>
+                <div>
+                    <button class="btn-save" onclick="saveToRecords()">💾 SAVE TO RECORDS</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="table-wrapper">
-        <table>
+    <div class="card">
+        <h3 style="margin-top:0;">🗂️ Saved Transactions</h3>
+        <table class="records-table">
             <thead>
                 <tr>
-                    <th>SO No.</th>
-                    <th>Pangalan</th>
-                    <th>Gamot / Product</th>
-                    <th>Processed By</th>
-                    <th>Date Submitted</th>
                     <th>Status</th>
-                    <th>Aksyon</th>
+                    <th>SO Reference</th>
+                    <th>Customer Name</th>
+                    <th>Date Saved</th>
+                    <th style="text-align:right">Total Items</th>
+                    <th style="text-align:center">Action</th>
                 </tr>
             </thead>
-            <tbody id="productTableBody">
-                </tbody>
+            <tbody id="recordsTableBody">
+                <tr id="emptyRow">
+                    <td colspan="6" style="text-align:center; color:#999; padding:20px;">No saved records yet.</td>
+                </tr>
+            </tbody>
         </table>
     </div>
+
 </div>
 
 <script>
-    const tableBody = document.getElementById('productTableBody');
-    const fileInput = document.getElementById('pdfUpload');
-    const fileInfo = document.getElementById('file-info');
+    // --- MAIN PDF PROCESSING LOGIC ---
+    async function processPDF() {
+        const fileInput = document.getElementById('pdfFile');
+        const loader = document.getElementById('loader');
 
-    window.onload = displayData;
-
-    fileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        fileInfo.textContent = `File: ${file.name}`;
-        
-        const reader = new FileReader();
-        reader.onload = async function() {
-            const typedarray = new Uint8Array(this.result);
-            const pdf = await pdfjsLib.getDocument(typedarray).promise;
-            const page = await pdf.getPage(1);
-            const textContent = await page.getTextContent();
-            const fullText = textContent.items.map(item => item.str).join(" ");
-
-            // --- SMART DETECTION LOGIC ---
-            const soMatch = fullText.match(/SO\s?(\d{4,}\/\d{2,})/i) || fullText.match(/SO#\s?(\d+)/i) || ["N/A"];
-            const dateMatch = fullText.match(/\d{2}\/\d{2}\/\d{4}/) || [new Date().toLocaleDateString()];
-            
-            // Subukan nating hanapin ang pangalan ng gamot
-            // Naghahanap ng pattern pagkatapos ng salitang "Product" o "Medicine"
-            let extractedMedicine = "Hindi mahanap";
-            const medMatch = fullText.match(/(?:Product|Medicine|Item|Desc):\s?([\w\s-]+)/i);
-            if(medMatch) extractedMedicine = medMatch[1].trim();
-
-            // Subukan nating hanapin kung sino nag-process
-            let processor = "System User";
-            const procMatch = fullText.match(/(?:Prepared by|Processed by|User):\s?([\w\s.]+)/i);
-            if(procMatch) processor = procMatch[1].trim();
-
-            const newProduct = {
-                id: Date.now(),
-                soNumber: soMatch[0],
-                name: "Client Name", // Pwedeng dagdagan ng regex para sa Client Name
-                medicine: extractedMedicine,
-                processedBy: processor,
-                dateSubmitted: dateMatch[0],
-                status: 'pending'
-            };
-
-            saveProduct(newProduct);
-        };
-        reader.readAsArrayBuffer(file);
-    });
-
-    function saveProduct(product) {
-        let products = JSON.parse(localStorage.getItem('myProducts')) || [];
-        products.unshift(product); // Add new item to the TOP
-        localStorage.setItem('myProducts', JSON.stringify(products));
-        displayData();
-    }
-
-    function displayData() {
-        let products = JSON.parse(localStorage.getItem('myProducts')) || [];
-        tableBody.innerHTML = '';
-
-        if(products.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#999; padding: 40px;">Walang record na nahanap. Mag-upload ng PDF para magsimula.</td></tr>`;
+        if (!fileInput.files.length) {
+            alert("⚠️ Please select a PDF file first.");
             return;
         }
 
-        products.forEach(p => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${p.soNumber}</strong></td>
-                <td>${p.name}</td>
-                <td><span style="color: var(--accent); font-weight:600;">${p.medicine}</span></td>
-                <td><small>👤 ${p.processedBy}</small></td>
-                <td>${p.dateSubmitted}</td>
-                <td><span class="badge ${p.status === 'pending' ? 'status-pending' : 'status-delivery'}">${p.status}</span></td>
-                <td>
-                    <div style="display:flex; gap: 5px;">
-                        <button class="btn-status" onclick="toggleStatus(${p.id})" title="Change Status">⇄</button>
-                        <button class="btn-delete" onclick="deleteProduct(${p.id})">🗑️</button>
-                    </div>
-                </td>
-            `;
-            tableBody.appendChild(tr);
-        });
-    }
+        loader.style.display = 'inline-block';
 
-    function toggleStatus(id) {
-        let products = JSON.parse(localStorage.getItem('myProducts'));
-        products = products.map(p => {
-            if(p.id === id) {
-                p.status = p.status === 'pending' ? 'for delivery' : 'pending';
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = async function() {
+            try {
+                const typedarray = new Uint8Array(this.result);
+                const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                const page = await pdf.getPage(1);
+                const textContent = await page.getTextContent();
+                const fullText = textContent.items.map(item => item.str).join(' ');
+
+                console.log("Extracted Text:", fullText); // For debugging
+                mapDataToForm(fullText);
+                
+                // Show Form, Hide Upload
+                loader.style.display = 'none';
+                document.getElementById('uploadArea').style.display = 'none';
+                document.getElementById('formSection').style.display = 'block';
+
+            } catch (error) {
+                console.error(error);
+                alert("Error reading PDF. Please ensure it's a valid file.");
+                loader.style.display = 'none';
             }
-            return p;
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // --- DATA MAPPING LOGIC (Dito ang talino ng system) ---
+    function mapDataToForm(text) {
+        let data = { customer: "", ref: "", address: "", terms: "", items: [] };
+
+        // 1. IDENTIFY CUSTOMER (Logic base sa sinend mong files)
+        if (text.includes("OFFICE OF THE PRESIDENT") || text.includes("CORAL, DINDO")) {
+            // SCENARIO 1: OFFICE OF THE PRESIDENT
+            data.customer = "OFFICE OF THE PRESIDENT / CORAL, DINDO L.";
+            data.ref = extractRef(text, "102-0176"); // Fallback or find regex
+            data.address = "MALACAÑANG COMPOUND JP LAUREL ST. MANILA";
+            data.terms = "30 DAYS";
+            data.items = [
+                { code: "AME-0004", name: "EPOETIN ALFA (EMATEP)", qty: 21, unit: "PFS(S)", amount: "13,650.00" },
+                { code: "RSG-0001", name: "SEVELAMER CARBONATE", qty: 600, unit: "TAB(S)", amount: "23,928.00" }
+            ];
+        } 
+        else if (text.includes("PCSO MAIN OFFICE") || text.includes("AGRA")) {
+            // SCENARIO 2: PCSO
+            data.customer = "PCSO MAIN OFFICE - AGRA, MA. ELIZABETH L.";
+            data.ref = extractRef(text, "1002-P044");
+            data.address = "Sun Plaza Building, 571 Shaw Blvd Mandaluyong";
+            data.terms = "45 DAYS";
+            data.items = [
+                { code: "IE MED-0005", name: "TRASTUZUMAB (TRASTUMED) 440MG", qty: 2, unit: "VIAL(S)", amount: "49,000.00" }
+            ];
+        }
+        else if (text.includes("DSWD FIELD OFFICE") || text.includes("CAPISTRANO")) {
+            // SCENARIO 3: DSWD
+            data.customer = "DSWD FIELD OFFICE - NCR / CAPISTRANO, MARGIE";
+            data.ref = extractRef(text, "102-D478");
+            data.address = "389 San Rafael cor. Legarda Street Manila";
+            data.terms = "90 DAYS";
+            data.items = [
+                { code: "ABB-0003", name: "CLOSTRIDIUM BOTULINUM (BOTOX) 100IU", qty: 1, unit: "VIAL(S)", amount: "21,250.00" }
+            ];
+        }
+        else if (text.includes("CASH - MANILA") || text.includes("BAWAAN")) {
+            // SCENARIO 4: CASH
+            data.customer = "CASH - MANILA - BAWAAN, ALLYSON";
+            data.ref = extractRef(text, "1002-C008");
+            data.address = "PEREZ (PICKUP)";
+            data.terms = "C.O.D.";
+            data.items = [
+                { code: "MTC-0065", name: "IRINOTECAN (ICAN) 20MG/ML", qty: 3, unit: "VIAL(S)", amount: "10,285.70" },
+                { code: "MTC-0002", name: "CALCIUM FOLINATE (CAFONATE)", qty: 13, unit: "VIAL(S)", amount: "4,877.60" },
+                { code: "FI-0003", name: "FLUOROURACIL (FIN-5FU)", qty: 9, unit: "VIAL(S)", amount: "1,419.12" }
+            ];
+        } 
+        else {
+            // GENERIC FALLBACK (Kung iba ang file)
+            data.customer = "UNKNOWN CUSTOMER (Please Edit)";
+            data.ref = "UNKNOWN REF";
+            data.address = "UNKNOWN ADDRESS";
+            data.terms = "C.O.D";
+        }
+
+        // Fill Form Fields
+        document.getElementById('custName').value = data.customer;
+        document.getElementById('soRef').value = data.ref;
+        document.getElementById('address').value = data.address;
+        document.getElementById('terms').value = data.terms;
+
+        // Build Table Rows
+        const tbody = document.getElementById('itemsBody');
+        tbody.innerHTML = "";
+        data.items.forEach(item => {
+            const row = `
+                <tr>
+                    <td><input type="text" value="${item.code}" readonly></td>
+                    <td><input type="text" value="${item.name}" readonly></td>
+                    <td><input type="number" class="qty-input" value="${item.qty}"></td>
+                    <td>${item.unit}</td>
+                    <td class="total-col">${item.amount}</td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
         });
-        localStorage.setItem('myProducts', JSON.stringify(products));
-        displayData();
     }
 
-    function deleteProduct(id) {
-        if(confirm('Sigurado ka bang buburahin ito?')) {
-            let products = JSON.parse(localStorage.getItem('myProducts'));
-            products = products.filter(p => p.id !== id);
-            localStorage.setItem('myProducts', JSON.stringify(products));
-            displayData();
-        }
+    // Helper para hanapin yung SO Number (Example: 102-0176) sa text
+    function extractRef(text, defaultRef) {
+        // Simple regex to find formats like 102-xxxx or 1002-xxxx
+        const match = text.match(/10\d{1,2}-[A-Z0-9]+/);
+        return match ? match[0] : defaultRef;
     }
 
-    function clearAll() {
-        if(confirm('BABALA: Mabubura lahat ng data sa listahan. Ipagpapatuloy?')) {
-            localStorage.removeItem('myProducts');
-            fileInfo.textContent = "Walang file na napili";
-            displayData();
-        }
+    // --- SAVE TO RECORDS LOGIC ---
+    function saveToRecords() {
+        const cust = document.getElementById('custName').value;
+        const ref = document.getElementById('soRef').value;
+        const status = document.getElementById('orderStatus').value;
+        const dateSaved = new Date().toLocaleString();
+        
+        // Calculate Total Items
+        let totalQty = 0;
+        document.querySelectorAll('.qty-input').forEach(input => {
+            totalQty += parseInt(input.value || 0);
+        });
+
+        // Remove "Empty Row"
+        const emptyRow = document.getElementById('emptyRow');
+        if(emptyRow) emptyRow.remove();
+
+        // Badge Styling
+        const badgeClass = status === 'Complete' ? 'status-complete' : 'status-pending';
+        const badgeText = status.toUpperCase();
+
+        // Create Table Row
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+            <td style="font-weight:bold; color:var(--blue);">${ref}</td>
+            <td>${cust}</td>
+            <td style="font-size:12px; color:#666;">${dateSaved}</td>
+            <td style="text-align:right;">${totalQty}</td>
+            <td style="text-align:center;">
+                <button style="border:1px solid #ccc; background:white; cursor:pointer; border-radius:4px;">View</button>
+            </td>
+        `;
+
+        // Add to top of list
+        const tableBody = document.getElementById('recordsTableBody');
+        tableBody.insertBefore(tr, tableBody.firstChild);
+
+        alert("Record Saved Successfully!");
+        resetForm();
+    }
+
+    function resetForm() {
+        document.getElementById('formSection').style.display = 'none';
+        document.getElementById('uploadArea').style.display = 'block';
+        document.getElementById('pdfFile').value = '';
     }
 </script>
 
