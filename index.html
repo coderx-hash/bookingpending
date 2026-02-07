@@ -3,515 +3,329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaTrack Pro: Medicine Request System</title>
+    <title>PharmaTrack Pro v2 | Multi-Item Tracker</title>
     <style>
         :root {
-            --primary: #4361ee; /* Modern Blue */
-            --primary-dark: #3a56d4;
-            --secondary: #3f37c9;
-            --success: #06d6a0; /* Vibrant Green */
-            --warning: #f72585; /* Pink/Red for Pending attention */
-            --bg: #f8f9fa;
+            --primary: #4361ee;
+            --success: #06d6a0;
+            --warning: #f72585;
+            --bg: #f0f2f5;
             --surface: #ffffff;
-            --text-main: #2b2d42;
-            --text-sub: #8d99ae;
-            --border: #e9ecef;
+            --text: #2b2d42;
+            --border: #dee2e6;
             --radius: 12px;
-            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            --shadow: 0 8px 30px rgba(0,0,0,0.05);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', 'Segoe UI', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); line-height: 1.6; }
+
+        .header { background: linear-gradient(135deg, #1e293b, #4361ee); color: white; padding: 40px 20px; text-align: center; margin-bottom: -50px; }
         
-        body { background-color: var(--bg); color: var(--text-main); padding-bottom: 40px; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 1fr; gap: 25px; }
+        @media(min-width: 1024px) { .container { grid-template-columns: 400px 1fr; } }
 
-        /* --- Header --- */
-        .top-bar {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 2rem 1rem;
-            text-align: center;
-            margin-bottom: -40px;
-            padding-bottom: 60px;
-        }
-        .top-bar h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 5px; }
-        .top-bar p { opacity: 0.9; font-size: 0.9rem; }
+        /* Stats Section */
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; grid-column: 1 / -1; position: relative; z-index: 10; }
+        .stat-card { background: var(--surface); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow); text-align: center; border-top: 4px solid var(--primary); }
 
-        /* --- Main Container --- */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 15px;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
-
-        @media(min-width: 900px) {
-            .container { grid-template-columns: 350px 1fr; }
-        }
-
-        /* --- Cards --- */
-        .card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border);
-        }
-
-        /* --- KPI Stats (Floating) --- */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-            margin-top: -30px; /* Overlap effect */
-            position: relative;
-            z-index: 10;
-        }
-
-        .stat-box {
-            background: white;
-            padding: 15px;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            text-align: center;
-            border-bottom: 4px solid transparent;
-        }
-        .stat-box.blue { border-color: var(--primary); }
-        .stat-box.pink { border-color: var(--warning); }
-        .stat-box.green { border-color: var(--success); }
-
-        .stat-val { font-size: 1.8rem; font-weight: 800; display: block; }
-        .stat-lbl { font-size: 0.75rem; text-transform: uppercase; color: var(--text-sub); font-weight: 600; }
-
-        /* --- Form --- */
+        /* Form Styling */
+        .card { background: var(--surface); padding: 25px; border-radius: var(--radius); box-shadow: var(--shadow); height: fit-content; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main); }
-        .form-control {
-            width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px;
-            font-size: 0.95rem; transition: all 0.2s;
-        }
-        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15); }
+        label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 5px; color: #64748b; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; }
         
-        .btn-main {
-            width: 100%; background: var(--primary); color: white; border: none; padding: 14px;
-            border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;
-        }
-        .btn-main:hover { background: var(--primary-dark); }
+        /* Medicine Dynamic Rows */
+        .medicine-entry { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #cbd5e1; position: relative; }
+        .btn-remove-med { position: absolute; top: 5px; right: 5px; background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.2rem; }
+        .btn-add-med { background: #e2e8f0; border: 2px dashed #cbd5e1; width: 100%; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 15px; transition: 0.3s; }
+        .btn-add-med:hover { background: #cbd5e1; }
 
-        /* --- Right Side (Tabs & List) --- */
-        .tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px; overflow-x: auto;}
-        .tab-btn {
-            background: none; border: none; padding: 8px 16px; cursor: pointer;
-            font-weight: 600; color: var(--text-sub); border-radius: 6px; white-space: nowrap;
-        }
+        /* Calculation Area */
+        .calc-box { background: #f1f5f9; padding: 15px; border-radius: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .tab-btn { padding: 10px 20px; border: none; background: #e2e8f0; border-radius: 30px; cursor: pointer; font-weight: 600; white-space: nowrap; color: #64748b; }
         .tab-btn.active { background: var(--primary); color: white; }
+
+        /* Tables */
+        .table-container { overflow-x: auto; background: white; border-radius: var(--radius); }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { background: #f8fafc; padding: 15px; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: #64748b; border-bottom: 2px solid var(--border); }
+        td { padding: 15px; border-bottom: 1px solid var(--border); vertical-align: top; }
         
-        .filter-area {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
-            background: #f1f3f5; padding: 10px; border-radius: 8px;
-        }
-        .filter-select { padding: 8px; border-radius: 6px; border: 1px solid #ddd; }
+        .med-list-item { font-size: 0.85rem; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; margin-bottom: 3px; display: block; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; }
+        .bg-pending { background: #fff1f2; color: #e11d48; }
+        .bg-complete { background: #f0fdf4; color: #16a34a; }
 
-        /* --- Table Styling --- */
-        .table-wrap { overflow-x: auto; max-height: 600px; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { 
-            text-align: left; padding: 12px; background: #f8f9fa; color: var(--text-sub); 
-            font-size: 0.8rem; text-transform: uppercase; position: sticky; top: 0; 
-        }
-        td { padding: 14px 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle;}
-        
-        .status-pill {
-            padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-block;
-        }
-        .st-pending { background: #ffe0e9; color: var(--warning); }
-        .st-complete { background: #d3f9d8; color: #1b5e20; }
-
-        /* --- Processor Summary Table --- */
-        .summary-table th { background: var(--primary); color: white; }
-        .summary-row td { font-weight: 600; }
-
-        /* --- Actions --- */
-        .action-group { display: flex; gap: 5px; }
-        .btn-icon {
-            padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.8rem;
-        }
-        .btn-done { background: var(--success); color: white; }
-        .btn-del { background: #fee2e2; color: #ef4444; }
-
-        /* Hide/Show logic */
-        .tab-content { display: none; animation: fadeIn 0.3s; }
-        .tab-content.active { display: block; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        <h1>🏥 PharmaTrack Pro</h1>
-        <p>Medicine Pending & Sales Order Monitoring</p>
-    </div>
+<div class="header">
+    <h1>PharmaTrack Multi-Item System</h1>
+    <p>Manage Multiple Medicines, GL Amounts, and Staff Performance</p>
+</div>
 
-    <div class="container">
-        <div style="grid-column: 1 / -1;">
-            <div class="stats-grid">
-                <div class="stat-box blue">
-                    <span class="stat-val" id="totalCount">0</span>
-                    <span class="stat-lbl">Total Orders</span>
-                </div>
-                <div class="stat-box pink">
-                    <span class="stat-val" id="pendingCount">0</span>
-                    <span class="stat-lbl">Pending Queue</span>
-                </div>
-                <div class="stat-box green">
-                    <span class="stat-val" id="completeCount">0</span>
-                    <span class="stat-lbl">Completed</span>
-                </div>
-            </div>
+<div class="container">
+    <div class="stats-row">
+        <div class="stat-card">
+            <span id="stat-pending" style="font-size: 1.5rem; font-weight: 800; color: var(--warning);">0</span>
+            <p style="font-size: 0.7rem; color: #64748b; font-weight: 700;">PENDING REQUESTS</p>
         </div>
-
-        <div class="left-col">
-            <div class="card">
-                <h3 style="margin-bottom: 15px; color: var(--primary);">📝 New Request</h3>
-                <form id="addForm">
-                    <div class="form-group">
-                        <label>Sales Order (SO) #</label>
-                        <input type="text" id="soInput" class="form-control" placeholder="e.g. SO-10023" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Patient Name</label>
-                        <input type="text" id="patInput" class="form-control" placeholder="Full Name" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Medicine / Item</label>
-                        <input type="text" id="medInput" class="form-control" placeholder="Brand/Generic" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Quantity</label>
-                        <input type="number" id="qtyInput" class="form-control" placeholder="0" min="1" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Processed By (Staff Name)</label>
-                        <select id="procInput" class="form-control" required>
-                            <option value="" disabled selected>Select or Type Name...</option>
-                            <option value="Staff 1">Staff 1</option>
-                            <option value="Staff 2">Staff 2</option>
-                            <option value="Other">Other (Type in separate list)</option>
-                        </select>
-                        <input type="text" id="procInputCustom" class="form-control" style="margin-top:5px; display:none;" placeholder="Type Name Here">
-                    </div>
-                    <button type="submit" class="btn-main">Add to Pending</button>
-                </form>
-            </div>
+        <div class="stat-card">
+            <span id="stat-gl" style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">₱ 0</span>
+            <p style="font-size: 0.7rem; color: #64748b; font-weight: 700;">TOTAL GL AMOUNT</p>
         </div>
-
-        <div class="right-col">
-            <div class="card">
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="switchTab('pending')">⏳ Pending Queue</button>
-                    <button class="tab-btn" onclick="switchTab('complete')">✅ Completed History</button>
-                    <button class="tab-btn" onclick="switchTab('summary')">📊 Staff Performance</button>
-                </div>
-
-                <div class="filter-area" id="filterContainer">
-                    <small><strong>Filter by Processor:</strong></small>
-                    <select id="filterProcessor" class="filter-select" onchange="renderAll()">
-                        <option value="All">Show All</option>
-                        </select>
-                </div>
-
-                <div id="tab-pending" class="tab-content active">
-                    <div class="table-wrap">
-                        <table id="pendingTable">
-                            <thead>
-                                <tr>
-                                    <th>Status</th>
-                                    <th>Details (SO / Patient)</th>
-                                    <th>Item Needed</th>
-                                    <th>Processed By</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pendingBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="tab-complete" class="tab-content">
-                    <div class="table-wrap">
-                        <table id="completeTable">
-                            <thead>
-                                <tr>
-                                    <th>Status</th>
-                                    <th>Details</th>
-                                    <th>Item</th>
-                                    <th>Processed By</th>
-                                    <th>Date Completed</th>
-                                </tr>
-                            </thead>
-                            <tbody id="completeBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="tab-summary" class="tab-content">
-                    <div style="padding: 10px; background: #e3f2fd; border-radius: 8px; margin-bottom: 10px; font-size: 0.9rem;">
-                        ℹ️ This table summarizes the workload per staff member.
-                    </div>
-                    <div class="table-wrap">
-                        <table class="summary-table">
-                            <thead>
-                                <tr>
-                                    <th>Staff Name</th>
-                                    <th style="text-align:center">Pending Tasks</th>
-                                    <th style="text-align:center">Completed Tasks</th>
-                                    <th style="text-align:center">Total handled</th>
-                                </tr>
-                            </thead>
-                            <tbody id="summaryBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </div>
+        <div class="stat-card">
+            <span id="stat-excess" style="font-size: 1.5rem; font-weight: 800; color: var(--success);">₱ 0</span>
+            <p style="font-size: 0.7rem; color: #64748b; font-weight: 700;">TOTAL EXCESS (CASH)</p>
         </div>
     </div>
 
-    <script>
-        // --- Data Handling ---
-        let data = JSON.parse(localStorage.getItem('pharmaData')) || [];
+    <div class="card">
+        <h3 style="margin-bottom: 20px;">Entry Form</h3>
+        <form id="mainForm">
+            <div class="form-group">
+                <label>Sales Order #</label>
+                <input type="text" id="soNum" class="form-control" placeholder="SO-000" required>
+            </div>
+            <div class="form-group">
+                <label>Patient Name</label>
+                <input type="text" id="patName" class="form-control" placeholder="Juan Dela Cruz" required>
+            </div>
 
-        // DOM Elements
-        const pendingBody = document.getElementById('pendingBody');
-        const completeBody = document.getElementById('completeBody');
-        const summaryBody = document.getElementById('summaryBody');
-        const filterSelect = document.getElementById('filterProcessor');
+            <label>Medicine List</label>
+            <div id="medicineRows">
+                <div class="medicine-entry">
+                    <input type="text" placeholder="Medicine Name" class="form-control med-name" style="margin-bottom:5px" required>
+                    <input type="number" placeholder="Qty" class="form-control med-qty" required>
+                </div>
+            </div>
+            <button type="button" class="btn-add-med" onclick="addMedRow()">+ Add Another Medicine</button>
+
+            <div class="calc-box">
+                <div class="form-group">
+                    <label>Total Amount</label>
+                    <input type="number" id="totalAmt" class="form-control" oninput="calcExcess()" value="0">
+                </div>
+                <div class="form-group">
+                    <label>GL Amount</label>
+                    <input type="number" id="glAmt" class="form-control" oninput="calcExcess()" value="0">
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Excess (Amount to Pay)</label>
+                    <input type="number" id="excessAmt" class="form-control" readonly style="background: #e2e8f0; font-weight: 700; color: #1e293b;">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top:15px">
+                <label>Processed By</label>
+                <input type="text" id="staffName" class="form-control" placeholder="Pharmacist Name" required>
+            </div>
+
+            <button type="submit" class="btn-add-med" style="background: var(--primary); color: white; border: none; font-size: 1rem;">Submit Transaction</button>
+        </form>
+    </div>
+
+    <div class="right-col">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab(event, 'pending-tab')">⏳ Pending Queue</button>
+            <button class="tab-btn" onclick="switchTab(event, 'history-tab')">✅ History</button>
+            <button class="tab-btn" onclick="switchTab(event, 'staff-tab')">📊 Staff Summary</button>
+        </div>
+
+        <div id="pending-tab" class="tab-content active">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SO / Patient</th>
+                            <th>Medicines</th>
+                            <th>Financials</th>
+                            <th>Staff</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendingBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="history-tab" class="tab-content">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SO / Patient</th>
+                            <th>Medicines</th>
+                            <th>Financials</th>
+                            <th>Staff</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="staff-tab" class="tab-content">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Staff Name</th>
+                            <th>Total SO Handled</th>
+                            <th>Total GL Volume</th>
+                            <th>Total Excess Collected</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let db = JSON.parse(localStorage.getItem('pharmaDB_v2')) || [];
+
+    function addMedRow() {
+        const container = document.getElementById('medicineRows');
+        const div = document.createElement('div');
+        div.className = 'medicine-entry';
+        div.innerHTML = `
+            <button type="button" class="btn-remove-med" onclick="this.parentElement.remove()">×</button>
+            <input type="text" placeholder="Medicine Name" class="form-control med-name" style="margin-bottom:5px" required>
+            <input type="number" placeholder="Qty" class="form-control med-qty" required>
+        `;
+        container.appendChild(div);
+    }
+
+    function calcExcess() {
+        const total = parseFloat(document.getElementById('totalAmt').value) || 0;
+        const gl = parseFloat(document.getElementById('glAmt').value) || 0;
+        document.getElementById('excessAmt').value = (total - gl).toFixed(2);
+    }
+
+    document.getElementById('mainForm').addEventListener('submit', (e) => {
+        e.preventDefault();
         
-        // Handle Custom Input for Processor
-        const procSelect = document.getElementById('procInput');
-        const procCustom = document.getElementById('procInputCustom');
-
-        procSelect.addEventListener('change', function() {
-            if(this.value === 'Other') {
-                procCustom.style.display = 'block';
-                procCustom.required = true;
-            } else {
-                procCustom.style.display = 'none';
-                procCustom.required = false;
-            }
+        const meds = [];
+        document.querySelectorAll('.medicine-entry').forEach(row => {
+            meds.push({
+                name: row.querySelector('.med-name').value,
+                qty: row.querySelector('.med-qty').value
+            });
         });
 
-        // Initial Render
-        renderAll();
+        const entry = {
+            id: Date.now(),
+            so: document.getElementById('soNum').value,
+            patient: document.getElementById('patName').value,
+            medicines: meds,
+            total: parseFloat(document.getElementById('totalAmt').value),
+            gl: parseFloat(document.getElementById('glAmt').value),
+            excess: parseFloat(document.getElementById('excessAmt').value),
+            staff: document.getElementById('staffName').value,
+            status: 'Pending',
+            date: new Date().toLocaleString()
+        };
 
-        // --- Form Submission ---
-        document.getElementById('addForm').addEventListener('submit', (e) => {
-            e.preventDefault();
+        db.push(entry);
+        saveAndRender();
+        e.target.reset();
+        document.getElementById('medicineRows').innerHTML = `<div class="medicine-entry"><input type="text" placeholder="Medicine Name" class="form-control med-name" style="margin-bottom:5px" required><input type="number" placeholder="Qty" class="form-control med-qty" required></div>`;
+    });
+
+    function saveAndRender() {
+        localStorage.setItem('pharmaDB_v2', JSON.stringify(db));
+        render();
+    }
+
+    function render() {
+        const pendingBody = document.getElementById('pendingBody');
+        const historyBody = document.getElementById('historyBody');
+        const staffBody = document.getElementById('staffBody');
+        
+        pendingBody.innerHTML = '';
+        historyBody.innerHTML = '';
+        
+        let totalGL = 0; let totalExcess = 0; let pendingCount = 0;
+        const staffMap = {};
+
+        db.forEach(item => {
+            // Stats Calculation
+            if(item.status === 'Pending') pendingCount++;
+            totalGL += item.gl;
+            totalExcess += item.excess;
+
+            // Staff Summary Logic
+            if(!staffMap[item.staff]) staffMap[item.staff] = { count: 0, gl: 0, excess: 0 };
+            staffMap[item.staff].count++;
+            staffMap[item.staff].gl += item.gl;
+            staffMap[item.staff].excess += item.excess;
+
+            // Medicine List HTML
+            const medHtml = item.medicines.map(m => `<span class="med-list-item"><b>${m.qty}x</b> ${m.name}</span>`).join('');
             
-            let processorName = procSelect.value;
-            if (processorName === 'Other') processorName = procCustom.value;
+            const tr = `
+                <tr>
+                    <td><b>${item.so}</b><br><small>${item.patient}</small></td>
+                    <td>${medHtml}</td>
+                    <td>
+                        <small>GL: ₱${item.gl.toLocaleString()}</small><br>
+                        <b>Exc: ₱${item.excess.toLocaleString()}</b>
+                    </td>
+                    <td><small>${item.staff}</small></td>
+                    ${item.status === 'Pending' ? 
+                        `<td><button onclick="complete(${item.id})" class="badge bg-complete" style="border:none; cursor:pointer">Mark Arrived</button></td>` : 
+                        `<td><span class="badge bg-complete">Completed</span></td>`}
+                </tr>
+            `;
 
-            const newItem = {
-                id: Date.now(),
-                so: document.getElementById('soInput').value.toUpperCase(),
-                patient: document.getElementById('patInput').value,
-                med: document.getElementById('medInput').value,
-                qty: document.getElementById('qtyInput').value,
-                processor: processorName, // Captures who processed it
-                status: 'pending',
-                timestamp: new Date().toLocaleString()
-            };
-
-            data.push(newItem);
-            saveData();
-            document.getElementById('addForm').reset();
-            procCustom.style.display = 'none';
-            procSelect.value = "";
-            renderAll();
+            if(item.status === 'Pending') pendingBody.innerHTML += tr;
+            else historyBody.innerHTML += tr;
         });
 
-        // --- Core Functions ---
-        function saveData() {
-            localStorage.setItem('pharmaData', JSON.stringify(data));
+        // Render Staff Summary
+        staffBody.innerHTML = '';
+        for(let name in staffMap) {
+            staffBody.innerHTML += `
+                <tr>
+                    <td><b>${name}</b></td>
+                    <td>${staffMap[name].count} Orders</td>
+                    <td>₱${staffMap[name].gl.toLocaleString()}</td>
+                    <td style="color:var(--success); font-weight:700">₱${staffMap[name].excess.toLocaleString()}</td>
+                </tr>
+            `;
         }
 
-        function renderAll() {
-            updateStats();
-            updateFilterOptions();
-            renderTables();
-            renderSummary();
-        }
+        document.getElementById('stat-pending').innerText = pendingCount;
+        document.getElementById('stat-gl').innerText = '₱ ' + totalGL.toLocaleString();
+        document.getElementById('stat-excess').innerText = '₱ ' + totalExcess.toLocaleString();
+    }
 
-        function updateStats() {
-            document.getElementById('totalCount').innerText = data.length;
-            document.getElementById('pendingCount').innerText = data.filter(i => i.status === 'pending').length;
-            document.getElementById('completeCount').innerText = data.filter(i => i.status === 'complete').length;
-        }
+    window.complete = (id) => {
+        const idx = db.findIndex(i => i.id === id);
+        db[idx].status = 'Complete';
+        saveAndRender();
+    };
 
-        function updateFilterOptions() {
-            // Get unique processors
-            const processors = [...new Set(data.map(item => item.processor))].sort();
-            const currentFilter = filterSelect.value;
-            
-            // Keep "All" option, clear rest
-            filterSelect.innerHTML = '<option value="All">Show All</option>';
-            
-            processors.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p;
-                opt.innerText = p;
-                filterSelect.appendChild(opt);
-            });
+    window.switchTab = (evt, tabId) => {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        evt.currentTarget.classList.add('active');
+    };
 
-            // Restore selection if it still exists
-            if (processors.includes(currentFilter)) {
-                filterSelect.value = currentFilter;
-            }
-        }
+    render();
+</script>
 
-        function renderTables() {
-            const filterValue = filterSelect.value;
-            
-            pendingBody.innerHTML = '';
-            completeBody.innerHTML = '';
-
-            // Filter data first
-            let displayData = data;
-            if(filterValue !== 'All') {
-                displayData = data.filter(item => item.processor === filterValue);
-            }
-
-            // Sort: Newest first
-            displayData.sort((a,b) => b.id - a.id);
-
-            if (displayData.length === 0) {
-                pendingBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:#999">No records found.</td></tr>';
-            }
-
-            displayData.forEach(item => {
-                // Create Row
-                const tr = document.createElement('tr');
-                
-                if (item.status === 'pending') {
-                    tr.innerHTML = `
-                        <td><span class="status-pill st-pending">PENDING</span></td>
-                        <td>
-                            <div style="font-weight:700; color:var(--primary)">${item.so}</div>
-                            <div style="font-size:0.85rem">${item.patient}</div>
-                        </td>
-                        <td>
-                            <div style="font-weight:600">${item.med}</div>
-                            <small>Qty: ${item.qty}</small>
-                        </td>
-                        <td>${item.processor}</td>
-                        <td>
-                            <div class="action-group">
-                                <button class="btn-icon btn-done" onclick="markComplete(${item.id})" title="Mark Arrived">✔</button>
-                                <button class="btn-icon btn-del" onclick="deleteItem(${item.id})" title="Delete">✕</button>
-                            </div>
-                        </td>
-                    `;
-                    pendingBody.appendChild(tr);
-                } else {
-                    tr.innerHTML = `
-                        <td><span class="status-pill st-complete">ARRIVED</span></td>
-                        <td>
-                            <div style="font-weight:700; color:#555">${item.so}</div>
-                            <div style="font-size:0.85rem">${item.patient}</div>
-                        </td>
-                        <td>${item.med} (Qty: ${item.qty})</td>
-                        <td>${item.processor}</td>
-                        <td><small>${item.timestamp}</small></td>
-                    `;
-                    completeBody.appendChild(tr);
-                }
-            });
-        }
-
-        function renderSummary() {
-            // Group By Logic
-            const stats = {};
-            
-            data.forEach(item => {
-                if (!stats[item.processor]) {
-                    stats[item.processor] = { pending: 0, complete: 0, total: 0 };
-                }
-                stats[item.processor].total++;
-                if (item.status === 'pending') stats[item.processor].pending++;
-                if (item.status === 'complete') stats[item.processor].complete++;
-            });
-
-            summaryBody.innerHTML = '';
-            
-            // Convert object to array for sorting
-            const sortedStats = Object.keys(stats).map(key => ({
-                name: key,
-                ...stats[key]
-            })).sort((a,b) => b.pending - a.pending); // Sort by highest pending first
-
-            if(sortedStats.length === 0) {
-                summaryBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px">No data available yet.</td></tr>';
-                return;
-            }
-
-            sortedStats.forEach(stat => {
-                const row = `
-                    <tr class="summary-row">
-                        <td>${stat.name}</td>
-                        <td style="text-align:center; color:var(--warning)">${stat.pending}</td>
-                        <td style="text-align:center; color:var(--success)">${stat.complete}</td>
-                        <td style="text-align:center">${stat.total}</td>
-                    </tr>
-                `;
-                summaryBody.innerHTML += row;
-            });
-        }
-
-        // --- Actions ---
-        window.markComplete = function(id) {
-            const item = data.find(i => i.id === id);
-            if(confirm(`Confirm item for ${item.patient} has arrived?`)) {
-                item.status = 'complete';
-                item.timestamp = new Date().toLocaleString(); // Update time to completion time
-                saveData();
-                renderAll();
-            }
-        };
-
-        window.deleteItem = function(id) {
-            if(confirm("Delete this request permanently?")) {
-                data = data.filter(i => i.id !== id);
-                saveData();
-                renderAll();
-            }
-        };
-
-        // --- UI Logic ---
-        window.switchTab = function(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            // Deactivate all buttons
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            
-            // Show selected
-            document.getElementById('tab-' + tabName).classList.add('active');
-            // Activate button
-            event.target.classList.add('active'); // Assumption: triggered by click
-
-            // Hide/Show Filter (Filter not needed for Summary View)
-            const filterContainer = document.getElementById('filterContainer');
-            if(tabName === 'summary') {
-                filterContainer.style.display = 'none';
-            } else {
-                filterContainer.style.display = 'flex';
-            }
-        };
-
-    </script>
 </body>
 </html>
