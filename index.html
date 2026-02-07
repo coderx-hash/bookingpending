@@ -3,382 +3,515 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Medicine Tracker</title>
+    <title>PharmaTrack Pro: Medicine Request System</title>
     <style>
         :root {
-            --primary: #2c3e50;
-            --secondary: #34495e;
-            --accent: #3498db;
-            --pending-bg: #fff3cd;
-            --pending-text: #856404;
-            --complete-bg: #d4edda;
-            --complete-text: #155724;
-            --danger: #e74c3c;
-            --light-bg: #f4f7f6;
-            --card-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --primary: #4361ee; /* Modern Blue */
+            --primary-dark: #3a56d4;
+            --secondary: #3f37c9;
+            --success: #06d6a0; /* Vibrant Green */
+            --warning: #f72585; /* Pink/Red for Pending attention */
+            --bg: #f8f9fa;
+            --surface: #ffffff;
+            --text-main: #2b2d42;
+            --text-sub: #8d99ae;
+            --border: #e9ecef;
+            --radius: 12px;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', 'Segoe UI', sans-serif; }
+        
+        body { background-color: var(--bg); color: var(--text-main); padding-bottom: 40px; }
 
-        body { background-color: var(--light-bg); color: #333; padding: 20px; }
+        /* --- Header --- */
+        .top-bar {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            margin-bottom: -40px;
+            padding-bottom: 60px;
+        }
+        .top-bar h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 5px; }
+        .top-bar p { opacity: 0.9; font-size: 0.9rem; }
 
-        .container { max-width: 1400px; margin: 0 auto; }
+        /* --- Main Container --- */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
 
-        /* HEADER & STATS */
-        header { text-align: center; margin-bottom: 25px; }
-        h1 { color: var(--primary); margin-bottom: 5px; }
+        @media(min-width: 900px) {
+            .container { grid-template-columns: 350px 1fr; }
+        }
+
+        /* --- Cards --- */
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        /* --- KPI Stats (Floating) --- */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 15px;
-            margin-bottom: 25px;
-        }
-        .stat-card {
-            background: white; padding: 20px; border-radius: 8px;
-            box-shadow: var(--card-shadow); text-align: center;
-            border-bottom: 4px solid var(--accent);
-        }
-        .stat-val { font-size: 2rem; font-weight: bold; display: block; }
-        .stat-lbl { font-size: 0.8rem; text-transform: uppercase; color: #777; letter-spacing: 1px; }
-        
-        /* FORM SECTION */
-        .form-section {
-            background: white; padding: 20px; border-radius: 8px;
-            box-shadow: var(--card-shadow); margin-bottom: 25px;
-        }
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            align-items: end;
-        }
-        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: var(--secondary); }
-        .form-group input {
-            width: 100%; padding: 10px; border: 1px solid #ddd;
-            border-radius: 4px; outline: none; transition: 0.3s;
-        }
-        .form-group input:focus { border-color: var(--accent); }
-        
-        button.btn-add {
-            background: var(--primary); color: white; border: none;
-            padding: 11px 20px; border-radius: 4px; cursor: pointer;
-            font-weight: 600; text-transform: uppercase; width: 100%;
-        }
-        button.btn-add:hover { background: var(--secondary); }
-
-        /* MAIN CONTENT - SPLIT VIEW */
-        .lists-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr; /* 50% - 50% Split */
-            gap: 20px;
-            height: calc(100vh - 350px); /* Fill remaining height */
-            min-height: 500px;
+            margin-bottom: 20px;
+            margin-top: -30px; /* Overlap effect */
+            position: relative;
+            z-index: 10;
         }
 
-        .list-column {
-            background: white; border-radius: 8px;
-            box-shadow: var(--card-shadow);
-            display: flex; flex-direction: column;
-            overflow: hidden;
-        }
-
-        .col-header {
-            padding: 15px; text-align: center; font-weight: bold;
-            color: white; letter-spacing: 1px;
-        }
-        .header-pending { background: #e67e22; }
-        .header-complete { background: #27ae60; }
-
-        .col-content {
+        .stat-box {
+            background: white;
             padding: 15px;
-            overflow-y: auto; /* Scrollable inside */
-            flex: 1;
-            background: #fafafa;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            text-align: center;
+            border-bottom: 4px solid transparent;
         }
+        .stat-box.blue { border-color: var(--primary); }
+        .stat-box.pink { border-color: var(--warning); }
+        .stat-box.green { border-color: var(--success); }
 
-        /* PROCESSOR GROUPS */
-        .processor-group {
-            background: white; border: 1px solid #e0e0e0;
-            border-radius: 6px; margin-bottom: 15px;
-            overflow: hidden;
+        .stat-val { font-size: 1.8rem; font-weight: 800; display: block; }
+        .stat-lbl { font-size: 0.75rem; text-transform: uppercase; color: var(--text-sub); font-weight: 600; }
+
+        /* --- Form --- */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-main); }
+        .form-control {
+            width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 0.95rem; transition: all 0.2s;
         }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15); }
         
-        .processor-header {
-            background: #eee; padding: 8px 15px;
-            font-weight: 700; color: #555;
-            display: flex; justify-content: space-between;
-            align-items: center; font-size: 0.9rem;
+        .btn-main {
+            width: 100%; background: var(--primary); color: white; border: none; padding: 14px;
+            border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;
         }
+        .btn-main:hover { background: var(--primary-dark); }
 
-        .item-row {
-            padding: 12px 15px;
-            border-bottom: 1px solid #f0f0f0;
-            display: flex; justify-content: space-between;
-            align-items: center;
+        /* --- Right Side (Tabs & List) --- */
+        .tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px; overflow-x: auto;}
+        .tab-btn {
+            background: none; border: none; padding: 8px 16px; cursor: pointer;
+            font-weight: 600; color: var(--text-sub); border-radius: 6px; white-space: nowrap;
         }
-        .item-row:last-child { border-bottom: none; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        
+        .filter-area {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+            background: #f1f3f5; padding: 10px; border-radius: 8px;
+        }
+        .filter-select { padding: 8px; border-radius: 6px; border: 1px solid #ddd; }
 
-        .item-details h4 { font-size: 0.95rem; margin-bottom: 2px; color: #2c3e50; }
-        .item-details p { font-size: 0.8rem; color: #7f8c8d; margin: 0; }
-        .item-badge {
-            display: inline-block; padding: 2px 6px; border-radius: 3px;
-            font-size: 0.7rem; margin-right: 5px; background: #eee;
+        /* --- Table Styling --- */
+        .table-wrap { overflow-x: auto; max-height: 600px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { 
+            text-align: left; padding: 12px; background: #f8f9fa; color: var(--text-sub); 
+            font-size: 0.8rem; text-transform: uppercase; position: sticky; top: 0; 
         }
+        td { padding: 14px 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle;}
+        
+        .status-pill {
+            padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-block;
+        }
+        .st-pending { background: #ffe0e9; color: var(--warning); }
+        .st-complete { background: #d3f9d8; color: #1b5e20; }
 
-        /* ACTIONS */
-        .btn-action {
-            padding: 6px 12px; border: none; border-radius: 4px;
-            cursor: pointer; font-size: 0.75rem; font-weight: 600;
-            margin-left: 5px;
-        }
-        .btn-check { background: var(--complete-text); color: white; }
-        .btn-undo { background: #f39c12; color: white; }
-        .btn-del { background: var(--danger); color: white; }
+        /* --- Processor Summary Table --- */
+        .summary-table th { background: var(--primary); color: white; }
+        .summary-row td { font-weight: 600; }
 
-        /* RESPONSIVE MOBILE */
-        @media (max-width: 900px) {
-            .lists-container {
-                grid-template-columns: 1fr; /* Stack columns */
-                height: auto; /* Allow auto growth */
-            }
-            .list-column { margin-bottom: 20px; max-height: 500px; }
-            .form-grid { grid-template-columns: 1fr; }
+        /* --- Actions --- */
+        .action-group { display: flex; gap: 5px; }
+        .btn-icon {
+            padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.8rem;
         }
+        .btn-done { background: var(--success); color: white; }
+        .btn-del { background: #fee2e2; color: #ef4444; }
+
+        /* Hide/Show logic */
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1>RX Tracking Dashboard</h1>
-        <p>Medicine Request & Sales Order Monitoring</p>
-    </header>
-
-    <div class="stats-grid">
-        <div class="stat-card" style="border-color: #3498db;">
-            <span class="stat-val" id="totalCount">0</span>
-            <span class="stat-lbl">Total Items</span>
-        </div>
-        <div class="stat-card" style="border-color: #e67e22;">
-            <span class="stat-val" id="pendingCount">0</span>
-            <span class="stat-lbl">Pending Requests</span>
-        </div>
-        <div class="stat-card" style="border-color: #27ae60;">
-            <span class="stat-val" id="completeCount">0</span>
-            <span class="stat-lbl">Completed</span>
-        </div>
+    <div class="top-bar">
+        <h1>🏥 PharmaTrack Pro</h1>
+        <p>Medicine Pending & Sales Order Monitoring</p>
     </div>
 
-    <div class="form-section">
-        <form id="addForm" class="form-grid">
-            <div class="form-group">
-                <label>Sales Order (SO) #</label>
-                <input type="text" id="soInput" placeholder="SO-001" required>
-            </div>
-            <div class="form-group">
-                <label>Patient Name</label>
-                <input type="text" id="patientInput" placeholder="Full Name" required>
-            </div>
-            <div class="form-group">
-                <label>Medicine / Item</label>
-                <input type="text" id="medInput" placeholder="Item Name" required>
-            </div>
-            <div class="form-group">
-                <label>Quantity</label>
-                <input type="number" id="qtyInput" placeholder="0" min="1" required>
-            </div>
-            <div class="form-group">
-                <label>Processed By (Staff)</label>
-                <input type="text" id="staffInput" placeholder="Staff Name" required>
-            </div>
-            <div class="form-group">
-                <label>&nbsp;</label>
-                <button type="submit" class="btn-add">+ Add Request</button>
-            </div>
-        </form>
-    </div>
-
-    <div class="lists-container">
-        
-        <div class="list-column">
-            <div class="col-header header-pending">
-                ⚠ PENDING LIST (To Order/Arrive)
-            </div>
-            <div class="col-content" id="pendingContainer">
+    <div class="container">
+        <div style="grid-column: 1 / -1;">
+            <div class="stats-grid">
+                <div class="stat-box blue">
+                    <span class="stat-val" id="totalCount">0</span>
+                    <span class="stat-lbl">Total Orders</span>
                 </div>
-        </div>
-
-        <div class="list-column">
-            <div class="col-header header-complete">
-                ✔ COMPLETED / ARRIVED
-                <button onclick="clearAll()" style="float:right; background:none; border:none; color:white; font-size:0.7rem; cursor:pointer; text-decoration:underline; margin-top:3px;">Reset Data</button>
-            </div>
-            <div class="col-content" id="completeContainer">
+                <div class="stat-box pink">
+                    <span class="stat-val" id="pendingCount">0</span>
+                    <span class="stat-lbl">Pending Queue</span>
                 </div>
+                <div class="stat-box green">
+                    <span class="stat-val" id="completeCount">0</span>
+                    <span class="stat-lbl">Completed</span>
+                </div>
+            </div>
         </div>
 
+        <div class="left-col">
+            <div class="card">
+                <h3 style="margin-bottom: 15px; color: var(--primary);">📝 New Request</h3>
+                <form id="addForm">
+                    <div class="form-group">
+                        <label>Sales Order (SO) #</label>
+                        <input type="text" id="soInput" class="form-control" placeholder="e.g. SO-10023" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Patient Name</label>
+                        <input type="text" id="patInput" class="form-control" placeholder="Full Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Medicine / Item</label>
+                        <input type="text" id="medInput" class="form-control" placeholder="Brand/Generic" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="qtyInput" class="form-control" placeholder="0" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Processed By (Staff Name)</label>
+                        <select id="procInput" class="form-control" required>
+                            <option value="" disabled selected>Select or Type Name...</option>
+                            <option value="Staff 1">Staff 1</option>
+                            <option value="Staff 2">Staff 2</option>
+                            <option value="Other">Other (Type in separate list)</option>
+                        </select>
+                        <input type="text" id="procInputCustom" class="form-control" style="margin-top:5px; display:none;" placeholder="Type Name Here">
+                    </div>
+                    <button type="submit" class="btn-main">Add to Pending</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="card">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('pending')">⏳ Pending Queue</button>
+                    <button class="tab-btn" onclick="switchTab('complete')">✅ Completed History</button>
+                    <button class="tab-btn" onclick="switchTab('summary')">📊 Staff Performance</button>
+                </div>
+
+                <div class="filter-area" id="filterContainer">
+                    <small><strong>Filter by Processor:</strong></small>
+                    <select id="filterProcessor" class="filter-select" onchange="renderAll()">
+                        <option value="All">Show All</option>
+                        </select>
+                </div>
+
+                <div id="tab-pending" class="tab-content active">
+                    <div class="table-wrap">
+                        <table id="pendingTable">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Details (SO / Patient)</th>
+                                    <th>Item Needed</th>
+                                    <th>Processed By</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tab-complete" class="tab-content">
+                    <div class="table-wrap">
+                        <table id="completeTable">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Details</th>
+                                    <th>Item</th>
+                                    <th>Processed By</th>
+                                    <th>Date Completed</th>
+                                </tr>
+                            </thead>
+                            <tbody id="completeBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tab-summary" class="tab-content">
+                    <div style="padding: 10px; background: #e3f2fd; border-radius: 8px; margin-bottom: 10px; font-size: 0.9rem;">
+                        ℹ️ This table summarizes the workload per staff member.
+                    </div>
+                    <div class="table-wrap">
+                        <table class="summary-table">
+                            <thead>
+                                <tr>
+                                    <th>Staff Name</th>
+                                    <th style="text-align:center">Pending Tasks</th>
+                                    <th style="text-align:center">Completed Tasks</th>
+                                    <th style="text-align:center">Total handled</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summaryBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div>
-</div>
 
-<script>
-    // --- STATE MANAGEMENT ---
-    let db = JSON.parse(localStorage.getItem('rxTrackerDB')) || [];
+    <script>
+        // --- Data Handling ---
+        let data = JSON.parse(localStorage.getItem('pharmaData')) || [];
 
-    // --- DOM ELEMENTS ---
-    const form = document.getElementById('addForm');
-    const pendingCont = document.getElementById('pendingContainer');
-    const completeCont = document.getElementById('completeContainer');
-
-    // --- INITIAL RENDER ---
-    renderAll();
-
-    // --- EVENT LISTENER: ADD ITEM ---
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
+        // DOM Elements
+        const pendingBody = document.getElementById('pendingBody');
+        const completeBody = document.getElementById('completeBody');
+        const summaryBody = document.getElementById('summaryBody');
+        const filterSelect = document.getElementById('filterProcessor');
         
-        // Capitalize Processor Name automatically for cleaner grouping
-        let staffName = document.getElementById('staffInput').value.trim();
-        staffName = staffName.charAt(0).toUpperCase() + staffName.slice(1);
+        // Handle Custom Input for Processor
+        const procSelect = document.getElementById('procInput');
+        const procCustom = document.getElementById('procInputCustom');
 
-        const newItem = {
-            id: Date.now(),
-            so: document.getElementById('soInput').value.toUpperCase(),
-            patient: document.getElementById('patientInput').value,
-            med: document.getElementById('medInput').value,
-            qty: document.getElementById('qtyInput').value,
-            processor: staffName,
-            status: 'pending', // 'pending' or 'complete'
-            timestamp: new Date().toLocaleString()
-        };
+        procSelect.addEventListener('change', function() {
+            if(this.value === 'Other') {
+                procCustom.style.display = 'block';
+                procCustom.required = true;
+            } else {
+                procCustom.style.display = 'none';
+                procCustom.required = false;
+            }
+        });
 
-        db.push(newItem);
-        saveAndRender();
-        form.reset();
-        document.getElementById('soInput').focus();
-    });
-
-    // --- CORE FUNCTIONS ---
-
-    function saveAndRender() {
-        localStorage.setItem('rxTrackerDB', JSON.stringify(db));
+        // Initial Render
         renderAll();
-    }
 
-    function renderAll() {
-        // 1. Update Stats
-        document.getElementById('totalCount').innerText = db.length;
-        document.getElementById('pendingCount').innerText = db.filter(i => i.status === 'pending').length;
-        document.getElementById('completeCount').innerText = db.filter(i => i.status === 'complete').length;
+        // --- Form Submission ---
+        document.getElementById('addForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            let processorName = procSelect.value;
+            if (processorName === 'Other') processorName = procCustom.value;
 
-        // 2. Separate Lists
-        const pendingList = db.filter(i => i.status === 'pending');
-        const completeList = db.filter(i => i.status === 'complete');
+            const newItem = {
+                id: Date.now(),
+                so: document.getElementById('soInput').value.toUpperCase(),
+                patient: document.getElementById('patInput').value,
+                med: document.getElementById('medInput').value,
+                qty: document.getElementById('qtyInput').value,
+                processor: processorName, // Captures who processed it
+                status: 'pending',
+                timestamp: new Date().toLocaleString()
+            };
 
-        // 3. Render Groups
-        renderGroupedList(pendingList, pendingCont, 'pending');
-        renderGroupedList(completeList, completeCont, 'complete');
-    }
+            data.push(newItem);
+            saveData();
+            document.getElementById('addForm').reset();
+            procCustom.style.display = 'none';
+            procSelect.value = "";
+            renderAll();
+        });
 
-    // Function to group items by "Processed By" and generate HTML
-    function renderGroupedList(dataList, container, type) {
-        container.innerHTML = ''; // Clear current
-
-        if(dataList.length === 0) {
-            container.innerHTML = `<div style="text-align:center; padding:20px; color:#ccc;">No ${type} items.</div>`;
-            return;
+        // --- Core Functions ---
+        function saveData() {
+            localStorage.setItem('pharmaData', JSON.stringify(data));
         }
 
-        // Grouping Logic
-        const groups = dataList.reduce((acc, item) => {
-            (acc[item.processor] = acc[item.processor] || []).push(item);
-            return acc;
-        }, {});
+        function renderAll() {
+            updateStats();
+            updateFilterOptions();
+            renderTables();
+            renderSummary();
+        }
 
-        // Sort processor names alphabetically
-        const sortedProcessors = Object.keys(groups).sort();
+        function updateStats() {
+            document.getElementById('totalCount').innerText = data.length;
+            document.getElementById('pendingCount').innerText = data.filter(i => i.status === 'pending').length;
+            document.getElementById('completeCount').innerText = data.filter(i => i.status === 'complete').length;
+        }
 
-        // Loop through each processor group
-        sortedProcessors.forEach(processor => {
-            const items = groups[processor];
+        function updateFilterOptions() {
+            // Get unique processors
+            const processors = [...new Set(data.map(item => item.processor))].sort();
+            const currentFilter = filterSelect.value;
             
-            // Create Group Wrapper
-            const groupDiv = document.createElement('div');
-            groupDiv.className = 'processor-group';
-
-            // Create Group Header
-            const count = items.length;
-            groupDiv.innerHTML = `
-                <div class="processor-header">
-                    <span>👤 ${processor}</span>
-                    <span style="font-size:0.8em; opacity:0.7;">${count} items</span>
-                </div>
-            `;
-
-            // Render Items inside this group
-            items.forEach(item => {
-                const row = document.createElement('div');
-                row.className = 'item-row';
-                
-                // Content
-                const badgeColor = type === 'pending' ? '#fff3cd' : '#d4edda';
-                const badgeText = type === 'pending' ? 'WAITING' : 'ARRIVED';
-                
-                let actionButtons = '';
-                if(type === 'pending') {
-                    actionButtons = `
-                        <button class="btn-action btn-check" onclick="toggleStatus(${item.id})">✔ ARRIVED</button>
-                        <button class="btn-action btn-del" onclick="deleteItem(${item.id})">✕</button>
-                    `;
-                } else {
-                    actionButtons = `
-                        <button class="btn-action btn-undo" onclick="toggleStatus(${item.id})">↺ UNDO</button>
-                    `;
-                }
-
-                row.innerHTML = `
-                    <div class="item-details">
-                        <h4>${item.med} <span style="font-weight:normal; font-size:0.8em;">(x${item.qty})</span></h4>
-                        <p>
-                            <span class="item-badge">${item.so}</span> 
-                            Px: <strong>${item.patient}</strong>
-                        </p>
-                    </div>
-                    <div>
-                        ${actionButtons}
-                    </div>
-                `;
-                groupDiv.appendChild(row);
+            // Keep "All" option, clear rest
+            filterSelect.innerHTML = '<option value="All">Show All</option>';
+            
+            processors.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.innerText = p;
+                filterSelect.appendChild(opt);
             });
 
-            container.appendChild(groupDiv);
-        });
-    }
-
-    // --- ACTIONS ---
-
-    window.toggleStatus = function(id) {
-        const item = db.find(i => i.id === id);
-        if(item) {
-            item.status = item.status === 'pending' ? 'complete' : 'pending';
-            saveAndRender();
+            // Restore selection if it still exists
+            if (processors.includes(currentFilter)) {
+                filterSelect.value = currentFilter;
+            }
         }
-    }
 
-    window.deleteItem = function(id) {
-        if(confirm('Are you sure you want to remove this item permanently?')) {
-            db = db.filter(i => i.id !== id);
-            saveAndRender();
+        function renderTables() {
+            const filterValue = filterSelect.value;
+            
+            pendingBody.innerHTML = '';
+            completeBody.innerHTML = '';
+
+            // Filter data first
+            let displayData = data;
+            if(filterValue !== 'All') {
+                displayData = data.filter(item => item.processor === filterValue);
+            }
+
+            // Sort: Newest first
+            displayData.sort((a,b) => b.id - a.id);
+
+            if (displayData.length === 0) {
+                pendingBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:#999">No records found.</td></tr>';
+            }
+
+            displayData.forEach(item => {
+                // Create Row
+                const tr = document.createElement('tr');
+                
+                if (item.status === 'pending') {
+                    tr.innerHTML = `
+                        <td><span class="status-pill st-pending">PENDING</span></td>
+                        <td>
+                            <div style="font-weight:700; color:var(--primary)">${item.so}</div>
+                            <div style="font-size:0.85rem">${item.patient}</div>
+                        </td>
+                        <td>
+                            <div style="font-weight:600">${item.med}</div>
+                            <small>Qty: ${item.qty}</small>
+                        </td>
+                        <td>${item.processor}</td>
+                        <td>
+                            <div class="action-group">
+                                <button class="btn-icon btn-done" onclick="markComplete(${item.id})" title="Mark Arrived">✔</button>
+                                <button class="btn-icon btn-del" onclick="deleteItem(${item.id})" title="Delete">✕</button>
+                            </div>
+                        </td>
+                    `;
+                    pendingBody.appendChild(tr);
+                } else {
+                    tr.innerHTML = `
+                        <td><span class="status-pill st-complete">ARRIVED</span></td>
+                        <td>
+                            <div style="font-weight:700; color:#555">${item.so}</div>
+                            <div style="font-size:0.85rem">${item.patient}</div>
+                        </td>
+                        <td>${item.med} (Qty: ${item.qty})</td>
+                        <td>${item.processor}</td>
+                        <td><small>${item.timestamp}</small></td>
+                    `;
+                    completeBody.appendChild(tr);
+                }
+            });
         }
-    }
 
-    window.clearAll = function() {
-        if(confirm('WARNING: Reset ALL data? This cannot be undone.')) {
-            db = [];
-            saveAndRender();
+        function renderSummary() {
+            // Group By Logic
+            const stats = {};
+            
+            data.forEach(item => {
+                if (!stats[item.processor]) {
+                    stats[item.processor] = { pending: 0, complete: 0, total: 0 };
+                }
+                stats[item.processor].total++;
+                if (item.status === 'pending') stats[item.processor].pending++;
+                if (item.status === 'complete') stats[item.processor].complete++;
+            });
+
+            summaryBody.innerHTML = '';
+            
+            // Convert object to array for sorting
+            const sortedStats = Object.keys(stats).map(key => ({
+                name: key,
+                ...stats[key]
+            })).sort((a,b) => b.pending - a.pending); // Sort by highest pending first
+
+            if(sortedStats.length === 0) {
+                summaryBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px">No data available yet.</td></tr>';
+                return;
+            }
+
+            sortedStats.forEach(stat => {
+                const row = `
+                    <tr class="summary-row">
+                        <td>${stat.name}</td>
+                        <td style="text-align:center; color:var(--warning)">${stat.pending}</td>
+                        <td style="text-align:center; color:var(--success)">${stat.complete}</td>
+                        <td style="text-align:center">${stat.total}</td>
+                    </tr>
+                `;
+                summaryBody.innerHTML += row;
+            });
         }
-    }
 
-</script>
+        // --- Actions ---
+        window.markComplete = function(id) {
+            const item = data.find(i => i.id === id);
+            if(confirm(`Confirm item for ${item.patient} has arrived?`)) {
+                item.status = 'complete';
+                item.timestamp = new Date().toLocaleString(); // Update time to completion time
+                saveData();
+                renderAll();
+            }
+        };
 
+        window.deleteItem = function(id) {
+            if(confirm("Delete this request permanently?")) {
+                data = data.filter(i => i.id !== id);
+                saveData();
+                renderAll();
+            }
+        };
+
+        // --- UI Logic ---
+        window.switchTab = function(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            // Deactivate all buttons
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            // Show selected
+            document.getElementById('tab-' + tabName).classList.add('active');
+            // Activate button
+            event.target.classList.add('active'); // Assumption: triggered by click
+
+            // Hide/Show Filter (Filter not needed for Summary View)
+            const filterContainer = document.getElementById('filterContainer');
+            if(tabName === 'summary') {
+                filterContainer.style.display = 'none';
+            } else {
+                filterContainer.style.display = 'flex';
+            }
+        };
+
+    </script>
 </body>
 </html>
