@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaTrack Pro v6 | Decimal Fixed</title>
+    <title>PharmaTrack Pro v7 | Checklist Mode</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
@@ -191,7 +191,6 @@
         .pat-name { font-weight: 700; color: var(--text-main); font-size: 0.95rem; }
 
         /* ----- INNER TABLE (The Medicines) ----- */
-        /* Make parent cell padding 0 to fit the table snugly */
         td.cell-breakdown { padding: 0 !important; } 
 
         table.inner-table { width: 100%; border-collapse: collapse; }
@@ -203,6 +202,21 @@
         }
         table.inner-table tr:last-child td { border-bottom: none; }
         
+        /* Checkbox Styling */
+        .med-check {
+            width: 16px; height: 16px; 
+            accent-color: var(--success); 
+            cursor: pointer;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .item-done { 
+            text-decoration: line-through; 
+            color: #94a3b8; 
+            opacity: 0.7; 
+        }
+
         .item-qty { 
             background: #f1f5f9; color: #64748b; 
             padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; 
@@ -217,12 +231,27 @@
             background: var(--success); color: white; border: none; 
             padding: 8px 14px; border-radius: 6px; cursor: pointer; 
             font-size: 0.8rem; font-weight: 600; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2); 
+            transition: all 0.3s;
         }
         .btn-complete:hover { background: #059669; }
+
+        /* DISABLED BUTTON STYLE */
+        .btn-disabled {
+            background: #cbd5e1 !important;
+            color: #94a3b8 !important;
+            box-shadow: none !important;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
 
         .badge-done { 
             color: var(--success); font-weight: 700; background: var(--success-bg); 
             padding: 6px 12px; border-radius: 20px; border: 1px solid #d1fae5; font-size: 0.8rem; 
+        }
+
+        .badge-progress {
+            font-size: 0.7rem; color: #e11d48; background: #ffe4e6; 
+            padding: 2px 6px; border-radius: 4px; border: 1px solid #fecdd3;
         }
 
     </style>
@@ -230,7 +259,7 @@
 <body>
 
 <div class="header">
-    <h1>PharmaTrack Pro v6</h1>
+    <h1>PharmaTrack Pro v7</h1>
     <p>Inventory & General Ledger Management System</p>
 </div>
 
@@ -312,7 +341,7 @@
                     <thead>
                         <tr>
                             <th class="col-ref">Reference</th>
-                            <th class="col-items" style="padding-left:0">Order Details</th>
+                            <th class="col-items" style="padding-left:0">Order Checklist</th>
                             <th class="col-fin">Financials</th>
                             <th class="col-staff">Staff</th>
                             <th class="col-action">Action</th>
@@ -360,7 +389,7 @@
 
 <script>
     // --- JAVASCRIPT LOGIC ---
-    let db = JSON.parse(localStorage.getItem('pharmaDB_v6')) || [];
+    let db = JSON.parse(localStorage.getItem('pharmaDB_v7')) || [];
 
     function addMedRow() {
         const container = document.getElementById('medicineRows');
@@ -375,12 +404,10 @@
     }
 
     function calcExcess() {
-        // parseFloat ensures we treat inputs as decimal numbers
         const total = parseFloat(document.getElementById('totalAmt').value) || 0;
         const gl = parseFloat(document.getElementById('glAmt').value) || 0;
         let diff = total - gl;
         
-        // Formats the result to 2 decimal places (e.g., 1,250.50)
         document.getElementById('excessAmt').value = diff.toLocaleString('en-US', {
             minimumFractionDigits: 2, 
             maximumFractionDigits: 2
@@ -394,11 +421,11 @@
         document.querySelectorAll('.medicine-entry').forEach(row => {
             meds.push({
                 name: row.querySelector('.med-name').value,
-                qty: row.querySelector('.med-qty').value
+                qty: row.querySelector('.med-qty').value,
+                checked: false // New Property: Starts as unchecked
             });
         });
 
-        // Use parseFloat to safely save decimals
         const total = parseFloat(document.getElementById('totalAmt').value) || 0;
         const gl = parseFloat(document.getElementById('glAmt').value) || 0;
         const excess = total - gl;
@@ -416,10 +443,9 @@
             date: new Date().toLocaleString()
         };
 
-        db.unshift(entry); // Adds new entry to top of list
+        db.unshift(entry);
         saveAndRender();
         
-        // Reset Form
         e.target.reset();
         document.getElementById('excessAmt').value = "0.00";
         document.getElementById('medicineRows').innerHTML = `
@@ -431,9 +457,19 @@
     });
 
     function saveAndRender() {
-        localStorage.setItem('pharmaDB_v6', JSON.stringify(db));
+        localStorage.setItem('pharmaDB_v7', JSON.stringify(db));
         render();
     }
+
+    // --- NEW: Toggle Checkbox Function ---
+    window.toggleItemCheck = (id, medIndex) => {
+        const idx = db.findIndex(i => i.id === id);
+        if (idx > -1) {
+            // Toggle the boolean value
+            db[idx].medicines[medIndex].checked = !db[idx].medicines[medIndex].checked;
+            saveAndRender(); // Save state immediately
+        }
+    };
 
     function render() {
         const pendingBody = document.getElementById('pendingBody');
@@ -449,7 +485,6 @@
         db.forEach(item => {
             if(item.status === 'Pending') pendingCount++;
             
-            // Ensure values are treated as numbers when adding to stats
             totalGL += Number(item.gl);
             totalExcess += Number(item.excess);
 
@@ -458,13 +493,31 @@
             staffMap[item.staff].gl += Number(item.gl);
             staffMap[item.staff].excess += Number(item.excess);
 
-            // Create Inner Table for Medicine
-            let medRows = item.medicines.map(m => `
-                <tr>
-                    <td>${m.name}</td>
-                    <td style="text-align:right"><span class="item-qty">${m.qty}</span></td>
-                </tr>
-            `).join('');
+            // --- CHECK LIST LOGIC ---
+            let allItemsChecked = true;
+
+            let medRows = item.medicines.map((m, index) => {
+                // Handle legacy data (if checked is undefined, treat as false)
+                const isChecked = m.checked === true;
+                if (!isChecked) allItemsChecked = false; // Mark overall status as incomplete
+
+                // Render Checkbox only for Pending items
+                const checkboxHtml = item.status === 'Pending' 
+                    ? `<input type="checkbox" class="med-check" ${isChecked ? 'checked' : ''} onchange="toggleItemCheck(${item.id}, ${index})">` 
+                    : `<span style="color:#10b981; margin-right:5px;">✓</span>`; // Show checkmark in history
+
+                const textClass = isChecked ? 'item-done' : '';
+
+                return `
+                    <tr>
+                        <td class="${textClass}">
+                            ${checkboxHtml}
+                            ${m.name}
+                        </td>
+                        <td style="text-align:right"><span class="item-qty">${m.qty}</span></td>
+                    </tr>
+                `;
+            }).join('');
 
             const innerTable = `
                 <table class="inner-table">
@@ -473,13 +526,29 @@
                 </table>
             `;
             
-            // Helper to format currency
             const formatMoney = (amount) => {
                 return parseFloat(amount).toLocaleString('en-US', {
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2
                 });
             };
+
+            // --- ACTION BUTTON LOGIC ---
+            let actionHtml = '';
+            if (item.status === 'Pending') {
+                if (allItemsChecked) {
+                    // Enabled Button
+                    actionHtml = `<button onclick="complete(${item.id})" class="btn-complete">✓ Complete</button>`;
+                } else {
+                    // Disabled Button
+                    actionHtml = `
+                        <button class="btn-complete btn-disabled" disabled>Complete</button>
+                        <div style="font-size:0.7rem; color:#e11d48; margin-top:4px;">Check Items!</div>
+                    `;
+                }
+            } else {
+                actionHtml = `<span class="badge-done">Paid & Done</span>`;
+            }
 
             const rowHtml = `
                 <tr>
@@ -499,9 +568,7 @@
                         <div style="font-weight:500; color:#475569;">${item.staff}</div>
                     </td>
                     <td class="col-action">
-                        ${item.status === 'Pending' 
-                            ? `<button onclick="complete(${item.id})" class="btn-complete">✓ Complete</button>` 
-                            : `<span class="badge-done">Paid & Done</span>`}
+                        ${actionHtml}
                     </td>
                 </tr>
             `;
@@ -523,7 +590,6 @@
             `;
         }
 
-        // Update Top Stats
         document.getElementById('stat-pending').innerText = pendingCount;
         document.getElementById('stat-gl').innerText = '₱ ' + totalGL.toLocaleString('en-US', {minimumFractionDigits: 2});
         document.getElementById('stat-excess').innerText = '₱ ' + totalExcess.toLocaleString('en-US', {minimumFractionDigits: 2});
@@ -544,7 +610,6 @@
         evt.currentTarget.classList.add('active');
     };
 
-    // Initial Render
     render();
 </script>
 
