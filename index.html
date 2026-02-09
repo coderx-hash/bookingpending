@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaTrack Pro v5 | Modern UI</title>
+    <title>PharmaTrack Pro v6 | Decimal Fixed</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            /* Modern Color Palette */
-            --primary: #3b82f6;       /* Bright Blue */
-            --primary-dark: #2563eb;  /* Darker Blue */
-            --secondary: #64748b;     /* Slate Gray */
-            --success: #10b981;       /* Emerald Green */
-            --bg-body: #f8fafc;       /* Very Light Gray Blue */
-            --surface: #ffffff;       /* Pure White */
-            --border: #e2e8f0;        /* Light Border */
-            --text-main: #1e293b;     /* Dark Slate */
-            --text-light: #94a3b8;    /* Lighter Gray */
+            /* Professional Color Palette */
+            --primary: #2563eb;       /* Royal Blue */
+            --primary-light: #eff6ff; /* Soft Blue Bg */
+            --secondary: #64748b;     /* Slate Text */
+            --success: #10b981;       /* Green */
+            --success-bg: #ecfdf5;    
+            --bg-body: #f1f5f9;       /* Light Gray Background */
+            --surface: #ffffff;       /* White Cards */
+            --border: #e2e8f0;        
+            --text-main: #1e293b;     
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            --radius: 12px;
+            --radius: 10px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
@@ -28,15 +28,16 @@
 
         /* HEADER */
         .header { 
-            background: #1e293b; 
+            background: #0f172a; 
             color: white; 
             padding: 30px 20px 60px 20px; 
             text-align: center; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         .header h1 { font-weight: 700; letter-spacing: -0.5px; margin-bottom: 5px; }
-        .header p { color: #94a3b8; font-size: 0.9rem; }
+        .header p { color: #94a3b8; font-size: 0.9rem; opacity: 0.8; }
 
-        /* LAYOUT */
+        /* GRID LAYOUT */
         .container { 
             max-width: 1400px; 
             margin: -40px auto 0; 
@@ -45,7 +46,7 @@
             grid-template-columns: 1fr; 
             gap: 25px; 
         }
-        @media(min-width: 1200px) { .container { grid-template-columns: 350px 1fr; } }
+        @media(min-width: 1200px) { .container { grid-template-columns: 360px 1fr; } }
 
         /* STATS CARDS */
         .stats-row { 
@@ -63,11 +64,12 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+            border-top: 4px solid transparent;
         }
         .stat-card h4 { font-size: 0.75rem; color: var(--secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
-        .stat-card span { font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
+        .stat-card span { font-size: 1.6rem; font-weight: 700; color: var(--text-main); }
 
-        /* LEFT PANEL: FORM */
+        /* FORM PANEL (LEFT) */
         .card-form { 
             background: var(--surface); 
             padding: 25px; 
@@ -77,28 +79,28 @@
             top: 20px; 
             border: 1px solid var(--border);
         }
-        .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+        .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); color: var(--text-main); }
         
         .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 5px; color: var(--secondary); }
+        label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--secondary); }
         .form-control { 
             width: 100%; 
             padding: 10px 12px; 
             border: 1px solid var(--border); 
-            border-radius: 8px; 
-            font-size: 0.9rem; 
+            border-radius: 6px; 
+            font-size: 0.95rem; 
             transition: all 0.2s;
-            background: #fdfdfd;
+            background: #f8fafc;
         }
-        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); background: white; }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); background: white; }
 
         /* Medicine Inputs */
-        .medicine-entry { display: flex; gap: 8px; margin-bottom: 8px; }
+        .medicine-entry { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
         .medicine-entry input.med-name { flex: 2; }
-        .medicine-entry input.med-qty { flex: 0.5; text-align: center; }
+        .medicine-entry input.med-qty { flex: 0.7; text-align: center; }
         .btn-remove-med { 
             background: #fee2e2; color: #ef4444; border: none; 
-            width: 38px; border-radius: 8px; cursor: pointer; font-size: 1.2rem; 
+            width: 35px; height: 38px; border-radius: 6px; cursor: pointer; font-size: 1.2rem; 
             display: flex; align-items: center; justify-content: center;
         }
         .btn-remove-med:hover { background: #fecaca; }
@@ -106,10 +108,10 @@
         .btn-add-med { 
             width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 20px;
             background: #f1f5f9; color: var(--secondary); border: 1px dashed #cbd5e1; 
-            border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem;
+            border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem;
             transition: 0.2s;
         }
-        .btn-add-med:hover { border-color: var(--primary); color: var(--primary); background: #eff6ff; }
+        .btn-add-med:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 
         /* Calculation Box */
         .calc-box { 
@@ -118,13 +120,13 @@
             grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; 
         }
         .total-highlight { 
-            grid-column: span 2; background: #eff6ff; border: 1px solid #bfdbfe; 
-            border-radius: 8px; padding: 10px; text-align: center; 
+            grid-column: span 2; background: var(--primary-light); border: 1px solid #bfdbfe; 
+            border-radius: 6px; padding: 10px; text-align: center; 
         }
-        .total-highlight label { color: var(--primary-dark); margin-bottom: 0; }
+        .total-highlight label { color: var(--primary); margin-bottom: 0; }
         .total-highlight input { 
             border: none; background: transparent; text-align: center; 
-            font-size: 1.4rem; font-weight: 800; color: var(--primary-dark); width: 100%; outline: none;
+            font-size: 1.5rem; font-weight: 800; color: #1e3a8a; width: 100%; outline: none;
         }
 
         .btn-submit { 
@@ -132,7 +134,7 @@
             border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; 
             cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
         }
-        .btn-submit:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn-submit:hover { background: #1d4ed8; transform: translateY(-1px); }
 
         /* RIGHT PANEL: TABS & TABLES */
         .tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
@@ -142,13 +144,13 @@
             font-size: 0.9rem; transition: 0.2s;
         }
         .tab-btn:hover { background: #f1f5f9; color: var(--text-main); }
-        .tab-btn.active { background: #eff6ff; color: var(--primary); }
+        .tab-btn.active { background: var(--primary-light); color: var(--primary); }
 
         .tab-content { display: none; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ----- MAIN TABLE STYLING (The Readable Part) ----- */
+        /* ----- MAIN TABLE STYLING ----- */
         .table-wrapper { 
             background: white; border-radius: var(--radius); 
             box-shadow: var(--shadow); border: 1px solid var(--border); 
@@ -159,7 +161,7 @@
         
         table.main-table th { 
             background: #f8fafc; 
-            padding: 18px 20px; 
+            padding: 16px 20px; 
             text-align: left; 
             font-size: 0.75rem; 
             font-weight: 700; 
@@ -169,58 +171,58 @@
             border-bottom: 1px solid var(--border);
         }
         
-        table.main-table tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+        table.main-table tr { border-bottom: 1px solid var(--border); }
         table.main-table tr:last-child { border-bottom: none; }
-        table.main-table tr:hover { background: #fdfdfd; } /* Subtle hover */
+        table.main-table tr:hover { background: #fdfdfd; }
 
-        table.main-table td { padding: 15px 20px; vertical-align: top; color: var(--text-main); }
+        table.main-table td { padding: 16px 20px; vertical-align: top; color: var(--text-main); font-size: 0.9rem; }
 
-        /* Specific Column Styling */
-        .col-ref { width: 15%; }
-        .col-items { width: 40%; }
+        /* Column Widths */
+        .col-ref { width: 18%; }
+        .col-items { width: 35%; }
         .col-fin { width: 20%; text-align: right; }
         .col-staff { width: 15%; text-align: center; }
-        .col-action { width: 10%; text-align: center; }
+        .col-action { width: 12%; text-align: center; }
 
         .so-badge { 
-            display: inline-block; background: #e0f2fe; color: #0369a1; 
-            padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; margin-bottom: 4px;
+            display: inline-block; background: #e2e8f0; color: #475569; 
+            padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; margin-bottom: 4px;
         }
-        .pat-name { font-weight: 600; color: var(--text-main); font-size: 0.95rem; }
+        .pat-name { font-weight: 700; color: var(--text-main); font-size: 0.95rem; }
 
-        /* ----- INNER TABLE (Seamless Look) ----- */
-        /* Removes borders and padding from the parent cell to make it seamless */
+        /* ----- INNER TABLE (The Medicines) ----- */
+        /* Make parent cell padding 0 to fit the table snugly */
         td.cell-breakdown { padding: 0 !important; } 
 
         table.inner-table { width: 100%; border-collapse: collapse; }
         table.inner-table th { 
-            background: #fafafa; padding: 8px 20px; font-size: 0.7rem; color: #94a3b8; border-bottom: 1px solid #f1f5f9;
+            background: #fafafa; padding: 6px 15px; font-size: 0.7rem; color: #94a3b8; border-bottom: 1px solid #f1f5f9;
         }
         table.inner-table td { 
-            padding: 8px 20px; border-bottom: 1px dashed #f1f5f9; font-size: 0.85rem; 
+            padding: 6px 15px; border-bottom: 1px dashed #f1f5f9; font-size: 0.85rem; color: #334155;
         }
         table.inner-table tr:last-child td { border-bottom: none; }
         
         .item-qty { 
-            background: #f1f5f9; color: var(--secondary); 
-            padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.8rem; 
+            background: #f1f5f9; color: #64748b; 
+            padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; 
         }
 
-        /* Financials */
-        .fin-gl { font-size: 0.85rem; color: var(--secondary); margin-bottom: 4px; }
-        .fin-total { font-size: 1.1rem; font-weight: 700; color: var(--success); }
+        /* Financials Text */
+        .fin-gl { font-size: 0.85rem; color: #64748b; margin-bottom: 2px; }
+        .fin-total { font-size: 1rem; font-weight: 700; color: var(--success); }
 
-        /* Buttons */
+        /* Buttons & Badges */
         .btn-complete { 
             background: var(--success); color: white; border: none; 
-            padding: 8px 12px; border-radius: 6px; cursor: pointer; 
+            padding: 8px 14px; border-radius: 6px; cursor: pointer; 
             font-size: 0.8rem; font-weight: 600; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2); 
         }
         .btn-complete:hover { background: #059669; }
 
         .badge-done { 
-            color: var(--success); font-weight: 700; background: #ecfdf5; 
-            padding: 6px 10px; border-radius: 20px; border: 1px solid #d1fae5; font-size: 0.8rem; 
+            color: var(--success); font-weight: 700; background: var(--success-bg); 
+            padding: 6px 12px; border-radius: 20px; border: 1px solid #d1fae5; font-size: 0.8rem; 
         }
 
     </style>
@@ -228,23 +230,23 @@
 <body>
 
 <div class="header">
-    <h1>PharmaTrack Pro v5</h1>
+    <h1>PharmaTrack Pro v6</h1>
     <p>Inventory & General Ledger Management System</p>
 </div>
 
 <div class="container">
     
     <div class="stats-row">
-        <div class="stat-card" style="border-bottom: 4px solid #f59e0b;">
+        <div class="stat-card" style="border-top-color: #f59e0b;">
             <h4>Pending Requests</h4>
             <span id="stat-pending">0</span>
         </div>
-        <div class="stat-card" style="border-bottom: 4px solid var(--primary);">
+        <div class="stat-card" style="border-top-color: var(--primary);">
             <h4>Total GL Volume</h4>
             <span id="stat-gl">₱ 0.00</span>
         </div>
-        <div class="stat-card" style="border-bottom: 4px solid var(--success);">
-            <h4>Total Cash (Excess)</h4>
+        <div class="stat-card" style="border-top-color: var(--success);">
+            <h4>Cash Collected (Excess)</h4>
             <span id="stat-excess">₱ 0.00</span>
         </div>
     </div>
@@ -265,8 +267,8 @@
                 <label style="margin-bottom: 8px;">Prescription Items</label>
                 <div id="medicineRows">
                     <div class="medicine-entry">
-                        <input type="text" placeholder="Medicine Name / Brand" class="form-control med-name" required>
-                        <input type="number" placeholder="Qty" class="form-control med-qty" required>
+                        <input type="text" placeholder="Item Name" class="form-control med-name" required>
+                        <input type="number" step="0.01" placeholder="Qty" class="form-control med-qty" required>
                         <button type="button" class="btn-remove-med" onclick="this.parentElement.remove()" style="visibility:hidden">×</button>
                     </div>
                 </div>
@@ -276,11 +278,11 @@
             <div class="calc-box">
                 <div class="form-group" style="margin:0">
                     <label>Total Bill</label>
-                    <input type="number" id="totalAmt" class="form-control" oninput="calcExcess()" step="0.01" placeholder="0.00">
+                    <input type="number" id="totalAmt" class="form-control" oninput="calcExcess()" step="0.01" placeholder="0.00" required>
                 </div>
                 <div class="form-group" style="margin:0">
                     <label>GL Amount</label>
-                    <input type="number" id="glAmt" class="form-control" oninput="calcExcess()" step="0.01" placeholder="0.00">
+                    <input type="number" id="glAmt" class="form-control" oninput="calcExcess()" step="0.01" placeholder="0.00" required>
                 </div>
                 <div class="total-highlight">
                     <label>PAYABLE (CASH)</label>
@@ -344,9 +346,9 @@
                     <thead>
                         <tr>
                             <th style="padding-left: 20px;">Pharmacist Name</th>
-                            <th style="text-align: center;">Transactions Handled</th>
-                            <th style="text-align: right;">Total GL Processed</th>
-                            <th style="text-align: right; padding-right:25px;">Total Cash Collected</th>
+                            <th style="text-align: center;">Transactions</th>
+                            <th style="text-align: right;">Total GL</th>
+                            <th style="text-align: right; padding-right:20px;">Total Cash</th>
                         </tr>
                     </thead>
                     <tbody id="staffBody"></tbody>
@@ -357,8 +359,8 @@
 </div>
 
 <script>
-    // --- JAVASCRIPT LOGIC (Updated for Rendering) ---
-    let db = JSON.parse(localStorage.getItem('pharmaDB_v5')) || [];
+    // --- JAVASCRIPT LOGIC ---
+    let db = JSON.parse(localStorage.getItem('pharmaDB_v6')) || [];
 
     function addMedRow() {
         const container = document.getElementById('medicineRows');
@@ -366,18 +368,23 @@
         div.className = 'medicine-entry';
         div.innerHTML = `
             <input type="text" placeholder="Item Name" class="form-control med-name" required>
-            <input type="number" placeholder="Qty" class="form-control med-qty" required>
+            <input type="number" step="0.01" placeholder="Qty" class="form-control med-qty" required>
             <button type="button" class="btn-remove-med" onclick="this.parentElement.remove()">×</button>
         `;
         container.appendChild(div);
     }
 
     function calcExcess() {
+        // parseFloat ensures we treat inputs as decimal numbers
         const total = parseFloat(document.getElementById('totalAmt').value) || 0;
         const gl = parseFloat(document.getElementById('glAmt').value) || 0;
         let diff = total - gl;
-        // Format to currency style
-        document.getElementById('excessAmt').value = diff.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        
+        // Formats the result to 2 decimal places (e.g., 1,250.50)
+        document.getElementById('excessAmt').value = diff.toLocaleString('en-US', {
+            minimumFractionDigits: 2, 
+            maximumFractionDigits: 2
+        });
     }
 
     document.getElementById('mainForm').addEventListener('submit', (e) => {
@@ -391,9 +398,10 @@
             });
         });
 
-        // Parse logic for excessAmt to remove commas if any, though input is calculated raw
+        // Use parseFloat to safely save decimals
         const total = parseFloat(document.getElementById('totalAmt').value) || 0;
         const gl = parseFloat(document.getElementById('glAmt').value) || 0;
+        const excess = total - gl;
 
         const entry = {
             id: Date.now(),
@@ -402,26 +410,28 @@
             medicines: meds,
             total: total,
             gl: gl,
-            excess: total - gl,
+            excess: excess,
             staff: document.getElementById('staffName').value,
             status: 'Pending',
             date: new Date().toLocaleString()
         };
 
-        db.unshift(entry); // Add to top of list
+        db.unshift(entry); // Adds new entry to top of list
         saveAndRender();
+        
+        // Reset Form
         e.target.reset();
         document.getElementById('excessAmt').value = "0.00";
         document.getElementById('medicineRows').innerHTML = `
             <div class="medicine-entry">
                 <input type="text" placeholder="Item Name" class="form-control med-name" required>
-                <input type="number" placeholder="Qty" class="form-control med-qty" required>
+                <input type="number" step="0.01" placeholder="Qty" class="form-control med-qty" required>
                 <button type="button" class="btn-remove-med" onclick="this.parentElement.remove()" style="visibility:hidden">×</button>
             </div>`;
     });
 
     function saveAndRender() {
-        localStorage.setItem('pharmaDB_v5', JSON.stringify(db));
+        localStorage.setItem('pharmaDB_v6', JSON.stringify(db));
         render();
     }
 
@@ -438,16 +448,17 @@
 
         db.forEach(item => {
             if(item.status === 'Pending') pendingCount++;
-            totalGL += item.gl;
-            totalExcess += item.excess;
+            
+            // Ensure values are treated as numbers when adding to stats
+            totalGL += Number(item.gl);
+            totalExcess += Number(item.excess);
 
             if(!staffMap[item.staff]) staffMap[item.staff] = { count: 0, gl: 0, excess: 0 };
             staffMap[item.staff].count++;
-            staffMap[item.staff].gl += item.gl;
-            staffMap[item.staff].excess += item.excess;
+            staffMap[item.staff].gl += Number(item.gl);
+            staffMap[item.staff].excess += Number(item.excess);
 
-            // Generate Inner Table (Medicines)
-            // This is the part that makes the table look "Clean" inside
+            // Create Inner Table for Medicine
             let medRows = item.medicines.map(m => `
                 <tr>
                     <td>${m.name}</td>
@@ -462,6 +473,14 @@
                 </table>
             `;
             
+            // Helper to format currency
+            const formatMoney = (amount) => {
+                return parseFloat(amount).toLocaleString('en-US', {
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2
+                });
+            };
+
             const rowHtml = `
                 <tr>
                     <td class="col-ref">
@@ -473,8 +492,8 @@
                         ${innerTable}
                     </td>
                     <td class="col-fin">
-                        <div class="fin-gl">GL: ₱${item.gl.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
-                        <div class="fin-total">₱${item.excess.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
+                        <div class="fin-gl">GL: ₱${formatMoney(item.gl)}</div>
+                        <div class="fin-total">₱${formatMoney(item.excess)}</div>
                     </td>
                     <td class="col-staff">
                         <div style="font-weight:500; color:#475569;">${item.staff}</div>
@@ -498,16 +517,16 @@
                 <tr>
                     <td style="font-weight:600; padding-left:20px;">${name}</td>
                     <td style="text-align:center;">${staffMap[name].count}</td>
-                    <td style="text-align:right;">₱${staffMap[name].gl.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
-                    <td style="text-align:right; padding-right:25px; font-weight:700; color:var(--success);">₱${staffMap[name].excess.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                    <td style="text-align:right;">₱${staffMap[name].gl.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                    <td style="text-align:right; padding-right:20px; font-weight:700; color:var(--success);">₱${staffMap[name].excess.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
                 </tr>
             `;
         }
 
-        // Render Top Cards
+        // Update Top Stats
         document.getElementById('stat-pending').innerText = pendingCount;
-        document.getElementById('stat-gl').innerText = '₱ ' + totalGL.toLocaleString(undefined, {minimumFractionDigits: 2});
-        document.getElementById('stat-excess').innerText = '₱ ' + totalExcess.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('stat-gl').innerText = '₱ ' + totalGL.toLocaleString('en-US', {minimumFractionDigits: 2});
+        document.getElementById('stat-excess').innerText = '₱ ' + totalExcess.toLocaleString('en-US', {minimumFractionDigits: 2});
     }
 
     window.complete = (id) => {
