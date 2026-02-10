@@ -69,6 +69,29 @@
         .stat-card h4 { font-size: 0.75rem; color: var(--secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
         .stat-card span { font-size: 1.6rem; font-weight: 700; color: var(--text-main); }
 
+        /* --- NEW STAFF QUEUE SECTION --- */
+        .staff-queue-row {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        .staff-queue-card {
+            background: white;
+            padding: 12px 15px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border-left: 4px solid #f59e0b; /* Orange for pending urgency */
+            min-width: 160px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
+        }
+        .staff-q-name { font-weight: 700; color: var(--text-main); font-size: 0.9rem; }
+        .staff-q-count { background: #fffbeb; color: #b45309; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; border: 1px solid #fcd34d; }
+
         /* FORM PANEL (LEFT) */
         .card-form { 
             background: var(--surface); 
@@ -236,7 +259,7 @@
         }
         .btn-complete:hover { background: #059669; }
 
-        /* NEW DELETE BUTTON STYLE */
+        /* DELETE BUTTON STYLE */
         .btn-delete {
             background: #fff1f2;
             color: #e11d48;
@@ -301,6 +324,10 @@
             <span id="stat-excess">₱ 0.00</span>
         </div>
     </div>
+
+    <h4 style="grid-column: 1/-1; margin-bottom:-15px; margin-top:10px; color:var(--secondary);">Real-time Staff Queue</h4>
+    <div class="staff-queue-row" id="staffQueueContainer">
+        </div>
 
     <div class="card-form">
         <h3 class="card-title">New Transaction</h3>
@@ -491,7 +518,7 @@
         }
     };
 
-    // --- NEW: DELETE FUNCTION ---
+    // --- DELETE FUNCTION ---
     window.deleteTransaction = (id) => {
         if(confirm("Are you sure you want to delete this transaction? This cannot be undone.")) {
             const idx = db.findIndex(i => i.id === id);
@@ -506,15 +533,22 @@
         const pendingBody = document.getElementById('pendingBody');
         const historyBody = document.getElementById('historyBody');
         const staffBody = document.getElementById('staffBody');
+        const queueContainer = document.getElementById('staffQueueContainer');
         
         pendingBody.innerHTML = '';
         historyBody.innerHTML = '';
+        queueContainer.innerHTML = '';
         
         let totalGL = 0; let totalExcess = 0; let pendingCount = 0;
-        const staffMap = {};
+        const staffMap = {}; // For overall stats
+        const pendingByStaff = {}; // For Top Queue Display
 
         db.forEach(item => {
-            if(item.status === 'Pending') pendingCount++;
+            if(item.status === 'Pending') {
+                pendingCount++;
+                // Count Pending per Staff for top display
+                pendingByStaff[item.staff] = (pendingByStaff[item.staff] || 0) + 1;
+            }
             
             totalGL += Number(item.gl);
             totalExcess += Number(item.excess);
@@ -565,7 +599,6 @@
             // --- ACTION BUTTON LOGIC ---
             let actionHtml = '';
             
-            // 1. Determine Status/Main Action
             if (item.status === 'Pending') {
                 if (allItemsChecked) {
                     actionHtml = `<button onclick="complete(${item.id})" class="btn-complete">✓ Complete</button>`;
@@ -579,7 +612,7 @@
                 actionHtml = `<span class="badge-done">Paid & Done</span>`;
             }
 
-            // 2. Add Delete Button (Appended to both Pending and History)
+            // Add Delete Button
             actionHtml += `<button onclick="deleteTransaction(${item.id})" class="btn-delete">🗑 Delete</button>`;
 
             const rowHtml = `
@@ -609,7 +642,21 @@
             else historyBody.innerHTML += rowHtml;
         });
 
-        // Render Staff Stats
+        // --- RENDER TOP STAFF QUEUE ---
+        if (Object.keys(pendingByStaff).length === 0) {
+            queueContainer.innerHTML = '<div style="color:#94a3b8; font-style:italic; padding-left:5px;">No pending items in queue.</div>';
+        } else {
+            for (let [staff, count] of Object.entries(pendingByStaff)) {
+                queueContainer.innerHTML += `
+                    <div class="staff-queue-card">
+                        <span class="staff-q-name">👤 ${staff}</span>
+                        <span class="staff-q-count">${count} Pending</span>
+                    </div>
+                `;
+            }
+        }
+
+        // Render Bottom Staff Stats
         staffBody.innerHTML = '';
         for(let name in staffMap) {
             staffBody.innerHTML += `
