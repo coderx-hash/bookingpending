@@ -77,6 +77,11 @@
             overflow-x: auto;
             padding-bottom: 5px;
         }
+        /* Custom Scrollbar for Queue */
+        .staff-queue-row::-webkit-scrollbar { height: 6px; }
+        .staff-queue-row::-webkit-scrollbar-track { background: #f1f5f9; }
+        .staff-queue-row::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
         .staff-queue-card {
             background: white;
             padding: 12px 15px;
@@ -173,12 +178,22 @@
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ----- MAIN TABLE STYLING ----- */
+        /* ----- MAIN TABLE STYLING (SCROLLABLE) ----- */
         .table-wrapper { 
             background: white; border-radius: var(--radius); 
             box-shadow: var(--shadow); border: 1px solid var(--border); 
-            overflow: hidden; 
+            /* NEW: Fixed Height & Scroll */
+            max-height: 600px;
+            overflow-y: auto;
+            overflow-x: auto;
+            position: relative;
         }
+
+        /* Custom Scrollbar for Table */
+        .table-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
+        .table-wrapper::-webkit-scrollbar-track { background: #f1f5f9; }
+        .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .table-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
         table.main-table { width: 100%; border-collapse: collapse; min-width: 800px; }
         
@@ -192,6 +207,12 @@
             text-transform: uppercase; 
             letter-spacing: 0.05em; 
             border-bottom: 1px solid var(--border);
+            
+            /* NEW: Sticky Header */
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
         
         table.main-table tr { border-bottom: 1px solid var(--border); }
@@ -523,7 +544,7 @@
         render();
     }
 
-    // --- MODIFIED CHECKBOX LOGIC (WITH DO POPUP) ---
+    // --- CHECKBOX LOGIC (WITH DO POPUP) ---
     window.toggleItemCheck = (id, medIndex) => {
         const idx = db.findIndex(i => i.id === id);
         if (idx > -1) {
