@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaTrack Pro v7 | Checklist Mode</title>
+    <title>PharmaTrack Pro v8 | Queue & Search</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
@@ -75,7 +75,7 @@
             display: flex;
             gap: 15px;
             overflow-x: auto;
-            padding-bottom: 5px;
+            padding-bottom: 8px; /* Added padding for hover effect space */
         }
         /* Custom Scrollbar for Queue */
         .staff-queue-row::-webkit-scrollbar { height: 6px; }
@@ -93,7 +93,28 @@
             justify-content: space-between;
             align-items: center;
             border: 1px solid var(--border);
+            cursor: pointer; /* Clickable */
+            transition: all 0.2s ease;
+            user-select: none;
         }
+        .staff-queue-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* ACTIVE FILTER STATE (When Clicked) */
+        .staff-queue-card.active-filter {
+            background: var(--primary);
+            border-left-color: #1d4ed8;
+            border-color: #1d4ed8;
+        }
+        .staff-queue-card.active-filter .staff-q-name { color: white; }
+        .staff-queue-card.active-filter .staff-q-count { 
+            background: white; 
+            color: var(--primary); 
+            border-color: white; 
+        }
+
         .staff-q-name { font-weight: 700; color: var(--text-main); font-size: 0.9rem; }
         .staff-q-count { background: #fffbeb; color: #b45309; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; border: 1px solid #fcd34d; }
 
@@ -182,7 +203,6 @@
         .table-wrapper { 
             background: white; border-radius: var(--radius); 
             box-shadow: var(--shadow); border: 1px solid var(--border); 
-            /* NEW: Fixed Height & Scroll */
             max-height: 600px;
             overflow-y: auto;
             overflow-x: auto;
@@ -208,7 +228,7 @@
             letter-spacing: 0.05em; 
             border-bottom: 1px solid var(--border);
             
-            /* NEW: Sticky Header */
+            /* Sticky Header */
             position: sticky;
             top: 0;
             z-index: 10;
@@ -315,11 +335,6 @@
             padding: 6px 12px; border-radius: 20px; border: 1px solid #d1fae5; font-size: 0.8rem; display: block; margin-bottom: 5px;
         }
 
-        .badge-progress {
-            font-size: 0.7rem; color: #e11d48; background: #ffe4e6; 
-            padding: 2px 6px; border-radius: 4px; border: 1px solid #fecdd3;
-        }
-
         .do-tag {
             font-size: 0.7rem;
             background: #dbeafe;
@@ -331,13 +346,30 @@
             display: inline-block;
             text-decoration: none !important;
         }
+        
+        /* Filter Info Tag */
+        .filter-tag {
+            display: none;
+            background: #1e293b;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            align-items: center;
+            justify-content: space-between;
+            max-width: fit-content;
+        }
+        .filter-tag.show { display: flex; }
+        .filter-close { cursor: pointer; margin-left: 10px; opacity: 0.7; }
+        .filter-close:hover { opacity: 1; }
 
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>PharmaTrack Pro v7</h1>
+    <h1>PharmaTrack Pro v8</h1>
     <p>Inventory & General Ledger Management System</p>
 </div>
 
@@ -358,7 +390,7 @@
         </div>
     </div>
 
-    <h4 style="grid-column: 1/-1; margin-bottom:-15px; margin-top:10px; color:var(--secondary);">Real-time Staff Queue</h4>
+    <h4 style="grid-column: 1/-1; margin-bottom:-15px; margin-top:10px; color:var(--secondary);">Real-time Staff Queue (Click to Filter)</h4>
     <div class="staff-queue-row" id="staffQueueContainer">
         </div>
 
@@ -412,14 +444,18 @@
 
     <div class="right-col">
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab(event, 'pending-tab')">Queue List</button>
-            <button class="tab-btn" onclick="switchTab(event, 'history-tab')">Transaction History</button>
-            <button class="tab-btn" onclick="switchTab(event, 'staff-tab')">Staff Performance</button>
+            <button class="tab-btn active" id="btn-pending-tab" onclick="switchTab(event, 'pending-tab')">Queue List</button>
+            <button class="tab-btn" id="btn-history-tab" onclick="switchTab(event, 'history-tab')">Transaction History</button>
+            <button class="tab-btn" id="btn-staff-tab" onclick="switchTab(event, 'staff-tab')">Staff Performance</button>
         </div>
 
         <div id="pending-tab" class="tab-content active">
-            <div style="margin-bottom: 12px; position: relative;">
-                <input type="text" id="pendingSearch" class="form-control" placeholder="🔍 Filter by SO Number or Patient Name..." onkeyup="render()" style="background: white; border-color: #cbd5e1;">
+            <div style="margin-bottom: 12px;">
+                <input type="text" id="pendingSearch" class="form-control" placeholder="🔍 Search SO, Patient, or Staff Name..." onkeyup="render()" style="background: white; border-color: #cbd5e1;">
+                <div id="activeFilterDisplay" class="filter-tag">
+                    <span id="filterText">Filtering by Staff</span>
+                    <span class="filter-close" onclick="clearStaffFilter()">✕</span>
+                </div>
             </div>
 
             <div class="table-wrapper">
@@ -476,6 +512,26 @@
 <script>
     // --- JAVASCRIPT LOGIC ---
     let db = JSON.parse(localStorage.getItem('pharmaDB_v7')) || [];
+    let activeStaffFilter = null; // Stores the currently clicked staff filter
+
+    // --- TAB SWITCHER ---
+    function switchTab(evt, tabId) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        // Deactivate all buttons
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        // Activate specific tab
+        document.getElementById(tabId).classList.add('active');
+        
+        // Handle Button Active State
+        if(evt) {
+            evt.currentTarget.classList.add('active');
+        } else {
+            // Manual switch support
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+    }
 
     function addMedRow() {
         const container = document.getElementById('medicineRows');
@@ -500,6 +556,7 @@
         });
     }
 
+    // --- SUBMIT TRANSACTION ---
     document.getElementById('mainForm').addEventListener('submit', (e) => {
         e.preventDefault();
         
@@ -509,7 +566,7 @@
                 name: row.querySelector('.med-name').value,
                 qty: row.querySelector('.med-qty').value,
                 checked: false,
-                doNumber: null // Init DO number as null
+                doNumber: null
             });
         });
 
@@ -554,25 +611,31 @@
         if (idx > -1) {
             const item = db[idx].medicines[medIndex];
             
-            // If item is currently unchecked, we want to check it -> ASK FOR DO NUMBER
             if (!item.checked) {
                 let doInput = prompt("Enter D.O. Number (Delivery Order) as proof of stock arrival:");
                 
-                // Only proceed if user enters a value (not null and not empty string)
                 if (doInput != null && doInput.trim() !== "") {
                     item.checked = true;
                     item.doNumber = doInput.trim();
                     saveAndRender();
                 } else {
-                    // User cancelled or left it blank
-                    // Force re-render to uncheck the box visually if it was clicked
-                    render(); 
+                    render(); // Reset visual check
                 }
             } else {
-                // Item is already checked, user wants to uncheck -> Just uncheck it
                 item.checked = false;
                 item.doNumber = null;
                 saveAndRender(); 
+            }
+        }
+    };
+
+    // --- COMPLETE TRANSACTION ---
+    window.complete = (id) => {
+        const idx = db.findIndex(i => i.id === id);
+        if (idx > -1) {
+            if(confirm("Complete this transaction?")) {
+                db[idx].status = 'Completed';
+                saveAndRender();
             }
         }
     };
@@ -588,14 +651,45 @@
         }
     };
 
+    // --- QUEUE FILTERING LOGIC ---
+    window.filterByStaff = (staffKey) => {
+        // Toggle: If clicking the same one, clear filter. If new, set filter.
+        if (activeStaffFilter === staffKey) {
+            activeStaffFilter = null;
+        } else {
+            activeStaffFilter = staffKey;
+            // Auto switch to pending tab to see results
+            switchTab(null, 'pending-tab');
+        }
+        render();
+    };
+
+    window.clearStaffFilter = () => {
+        activeStaffFilter = null;
+        render();
+    }
+
+    // --- RENDER MAIN FUNCTION ---
     function render() {
         const pendingBody = document.getElementById('pendingBody');
         const historyBody = document.getElementById('historyBody');
         const staffBody = document.getElementById('staffBody');
         const queueContainer = document.getElementById('staffQueueContainer');
+        const filterTag = document.getElementById('activeFilterDisplay');
+        const filterText = document.getElementById('filterText');
         
-        // GET SEARCH FILTER VALUE
-        const filterVal = document.getElementById('pendingSearch') ? document.getElementById('pendingSearch').value.toLowerCase() : "";
+        // GET TEXT SEARCH VALUE
+        const textSearchVal = document.getElementById('pendingSearch') ? document.getElementById('pendingSearch').value.toLowerCase() : "";
+
+        // UI: Show/Hide Filter Tag
+        if (activeStaffFilter) {
+            filterTag.classList.add('show');
+            // Find display name for the tag
+            const name = activeStaffFilter; // In a real app we'd map key back to display name
+            filterText.textContent = `Filtering for: ${activeStaffFilter}`;
+        } else {
+            filterTag.classList.remove('show');
+        }
 
         pendingBody.innerHTML = '';
         historyBody.innerHTML = '';
@@ -603,32 +697,30 @@
         
         let totalGL = 0; let totalExcess = 0; let pendingCount = 0;
         const staffMap = {}; // For overall stats
-        const pendingByStaff = {}; // For Top Queue Display (Grouped)
+        const pendingByStaff = {}; // For Top Queue Display
 
         db.forEach(item => {
-            // Stats & Queue Logic
+            // --- STATS ACCUMULATION ---
             if(item.status === 'Pending') {
                 pendingCount++;
                 
-                // --- CASE INSENSITIVE GROUPING LOGIC ---
-                // Create a standard key (uppercase, trimmed) to detect same name
+                // Grouping Logic for Queue
                 const rawName = item.staff || "Unknown";
-                const staffKey = rawName.trim().toUpperCase();
+                const staffKey = rawName.toUpperCase().trim(); // Use Uppercase as Key
 
                 if (!pendingByStaff[staffKey]) {
-                    // Initialize if key doesn't exist
                     pendingByStaff[staffKey] = {
-                        displayName: rawName, // Keep the original name for display
+                        displayName: rawName, 
                         count: 0
                     };
                 }
-                pendingByStaff[staffKey].count++; // Increment count for this person
+                pendingByStaff[staffKey].count++;
             }
             
             totalGL += Number(item.gl);
             totalExcess += Number(item.excess);
 
-            // Grouping for the bottom table (Performance)
+            // Grouping for Performance Table
             const staffKeyPerf = (item.staff || "Unknown").trim().toUpperCase();
             if(!staffMap[staffKeyPerf]) {
                 staffMap[staffKeyPerf] = { 
@@ -642,7 +734,7 @@
             staffMap[staffKeyPerf].gl += Number(item.gl);
             staffMap[staffKeyPerf].excess += Number(item.excess);
 
-            // --- CHECK LIST LOGIC ---
+            // --- BUILD ROW HTML ---
             let allItemsChecked = true;
 
             let medRows = item.medicines.map((m, index) => {
@@ -654,16 +746,12 @@
                     : `<span style="color:#10b981; margin-right:5px;">✓</span>`; 
 
                 const textClass = isChecked ? 'item-done' : '';
-                
-                // Display DO Number if exists
                 const doBadge = m.doNumber ? `<span class="do-tag">DO: ${m.doNumber}</span>` : '';
 
                 return `
                     <tr>
                         <td class="${textClass}">
-                            ${checkboxHtml}
-                            ${m.name}
-                            ${doBadge}
+                            ${checkboxHtml} ${m.name} ${doBadge}
                         </td>
                         <td style="text-align:right"><span class="item-qty">${m.qty}</span></td>
                     </tr>
@@ -677,30 +765,18 @@
                 </table>
             `;
             
-            const formatMoney = (amount) => {
-                return parseFloat(amount).toLocaleString('en-US', {
-                    minimumFractionDigits: 2, 
-                    maximumFractionDigits: 2
-                });
-            };
+            const formatMoney = (amount) => parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-            // --- ACTION BUTTON LOGIC ---
             let actionHtml = '';
-            
             if (item.status === 'Pending') {
                 if (allItemsChecked) {
                     actionHtml = `<button onclick="complete(${item.id})" class="btn-complete">✓ Complete</button>`;
                 } else {
-                    actionHtml = `
-                        <button class="btn-complete btn-disabled" disabled>Complete</button>
-                        <div style="font-size:0.7rem; color:#e11d48; margin-top:4px;">Check Items!</div>
-                    `;
+                    actionHtml = `<button class="btn-complete btn-disabled" disabled>Complete</button><div style="font-size:0.7rem; color:#e11d48; margin-top:4px;">Check Items!</div>`;
                 }
             } else {
                 actionHtml = `<span class="badge-done">Paid & Done</span>`;
             }
-
-            // Add Delete Button
             actionHtml += `<button onclick="deleteTransaction(${item.id})" class="btn-delete">🗑 Delete</button>`;
 
             const rowHtml = `
@@ -710,28 +786,30 @@
                         <div class="pat-name">${item.patient}</div>
                         <div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">${item.date.split(',')[0]}</div>
                     </td>
-                    <td class="col-items cell-breakdown">
-                        ${innerTable}
-                    </td>
+                    <td class="col-items cell-breakdown">${innerTable}</td>
                     <td class="col-fin">
                         <div class="fin-gl">GL: ₱${formatMoney(item.gl)}</div>
                         <div class="fin-total">₱${formatMoney(item.excess)}</div>
                     </td>
-                    <td class="col-staff">
-                        <div style="font-weight:500; color:#475569;">${item.staff}</div>
-                    </td>
-                    <td class="col-action">
-                        ${actionHtml}
-                    </td>
+                    <td class="col-staff"><div style="font-weight:500; color:#475569;">${item.staff}</div></td>
+                    <td class="col-action">${actionHtml}</td>
                 </tr>
             `;
 
-            // FILTER LOGIC FOR PENDING
+            // --- FILTERING LOGIC (Applied to Pending Only) ---
             if(item.status === 'Pending') {
-                // Check if SO or Patient matches search
-                const matchSearch = item.so.toLowerCase().includes(filterVal) || item.patient.toLowerCase().includes(filterVal);
+                // 1. Text Search Filter (SO, Patient, OR STAFF)
+                const searchStr = (item.so + " " + item.patient + " " + item.staff).toLowerCase();
+                const matchesText = searchStr.includes(textSearchVal);
                 
-                if (matchSearch) {
+                // 2. Queue Click Filter
+                let matchesQueue = true;
+                if (activeStaffFilter) {
+                    matchesQueue = (item.staff.trim().toUpperCase() === activeStaffFilter);
+                }
+
+                // Show only if BOTH match
+                if (matchesText && matchesQueue) {
                     pendingBody.innerHTML += rowHtml;
                 }
             }
@@ -740,15 +818,18 @@
             }
         });
 
-        // --- RENDER TOP STAFF QUEUE (Grouped) ---
+        // --- RENDER TOP STAFF QUEUE ---
         if (Object.keys(pendingByStaff).length === 0) {
             queueContainer.innerHTML = '<div style="color:#94a3b8; font-style:italic; padding-left:5px;">No pending items in queue.</div>';
         } else {
-            // Iterate through the grouped staff object
             for (let key in pendingByStaff) {
                 const staffData = pendingByStaff[key];
+                
+                // Check if this card is currently active (clicked)
+                const isActiveClass = (activeStaffFilter === key) ? 'active-filter' : '';
+
                 queueContainer.innerHTML += `
-                    <div class="staff-queue-card">
+                    <div class="staff-queue-card ${isActiveClass}" onclick="filterByStaff('${key}')">
                         <span class="staff-q-name">👤 ${staffData.displayName}</span>
                         <span class="staff-q-count">${staffData.count} Pending</span>
                     </div>
@@ -756,7 +837,12 @@
             }
         }
 
-        // Render Bottom Staff Stats
+        // --- UPDATE STATS HEADER ---
+        document.getElementById('stat-pending').innerText = pendingCount;
+        document.getElementById('stat-gl').innerText = "₱ " + totalGL.toLocaleString('en-US', {minimumFractionDigits:2});
+        document.getElementById('stat-excess').innerText = "₱ " + totalExcess.toLocaleString('en-US', {minimumFractionDigits:2});
+
+        // --- RENDER PERFORMANCE TABLE ---
         staffBody.innerHTML = '';
         for(let key in staffMap) {
             const s = staffMap[key];
@@ -765,35 +851,15 @@
                     <td style="font-weight:600; padding-left:20px;">${s.displayName}</td>
                     <td style="text-align:center;">${s.count}</td>
                     <td style="text-align:right;">₱${s.gl.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
-                    <td style="text-align:right; padding-right:20px; font-weight:700; color:var(--success);">₱${s.excess.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                    <td style="text-align:right; padding-right:20px;">₱${s.excess.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
                 </tr>
             `;
         }
-
-        document.getElementById('stat-pending').innerText = pendingCount;
-        document.getElementById('stat-gl').innerText = '₱ ' + totalGL.toLocaleString('en-US', {minimumFractionDigits: 2});
-        document.getElementById('stat-excess').innerText = '₱ ' + totalExcess.toLocaleString('en-US', {minimumFractionDigits: 2});
     }
-
-    window.complete = (id) => {
-        const idx = db.findIndex(i => i.id === id);
-        if (idx > -1) {
-            db[idx].status = 'Complete';
-            saveAndRender();
-        }
-    };
-
-    window.switchTab = (evt, tabId) => {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        
-        document.getElementById(tabId).classList.add('active');
-        evt.currentTarget.classList.add('active');
-    };
 
     // Initial Render
     render();
-</script>
 
+</script>
 </body>
 </html>
