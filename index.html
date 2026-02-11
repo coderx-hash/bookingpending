@@ -299,6 +299,18 @@
             padding: 2px 6px; border-radius: 4px; border: 1px solid #fecdd3;
         }
 
+        .do-tag {
+            font-size: 0.7rem;
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 1px 5px;
+            border-radius: 3px;
+            margin-left: 5px;
+            font-weight: 600;
+            display: inline-block;
+            text-decoration: none !important;
+        }
+
     </style>
 </head>
 <body>
@@ -471,7 +483,8 @@
             meds.push({
                 name: row.querySelector('.med-name').value,
                 qty: row.querySelector('.med-qty').value,
-                checked: false 
+                checked: false,
+                doNumber: null // Init DO number as null
             });
         });
 
@@ -510,11 +523,32 @@
         render();
     }
 
+    // --- MODIFIED CHECKBOX LOGIC (WITH DO POPUP) ---
     window.toggleItemCheck = (id, medIndex) => {
         const idx = db.findIndex(i => i.id === id);
         if (idx > -1) {
-            db[idx].medicines[medIndex].checked = !db[idx].medicines[medIndex].checked;
-            saveAndRender(); 
+            const item = db[idx].medicines[medIndex];
+            
+            // If item is currently unchecked, we want to check it -> ASK FOR DO NUMBER
+            if (!item.checked) {
+                let doInput = prompt("Enter D.O. Number (Delivery Order) as proof of stock arrival:");
+                
+                // Only proceed if user enters a value (not null and not empty string)
+                if (doInput != null && doInput.trim() !== "") {
+                    item.checked = true;
+                    item.doNumber = doInput.trim();
+                    saveAndRender();
+                } else {
+                    // User cancelled or left it blank
+                    // Force re-render to uncheck the box visually if it was clicked
+                    render(); 
+                }
+            } else {
+                // Item is already checked, user wants to uncheck -> Just uncheck it
+                item.checked = false;
+                item.doNumber = null;
+                saveAndRender(); 
+            }
         }
     };
 
@@ -541,22 +575,44 @@
         
         let totalGL = 0; let totalExcess = 0; let pendingCount = 0;
         const staffMap = {}; // For overall stats
-        const pendingByStaff = {}; // For Top Queue Display
+        const pendingByStaff = {}; // For Top Queue Display (Grouped)
 
         db.forEach(item => {
+            // Stats & Queue Logic
             if(item.status === 'Pending') {
                 pendingCount++;
-                // Count Pending per Staff for top display
-                pendingByStaff[item.staff] = (pendingByStaff[item.staff] || 0) + 1;
+                
+                // --- CASE INSENSITIVE GROUPING LOGIC ---
+                // Create a standard key (uppercase, trimmed) to detect same name
+                const rawName = item.staff || "Unknown";
+                const staffKey = rawName.trim().toUpperCase();
+
+                if (!pendingByStaff[staffKey]) {
+                    // Initialize if key doesn't exist
+                    pendingByStaff[staffKey] = {
+                        displayName: rawName, // Keep the original name for display
+                        count: 0
+                    };
+                }
+                pendingByStaff[staffKey].count++; // Increment count for this person
             }
             
             totalGL += Number(item.gl);
             totalExcess += Number(item.excess);
 
-            if(!staffMap[item.staff]) staffMap[item.staff] = { count: 0, gl: 0, excess: 0 };
-            staffMap[item.staff].count++;
-            staffMap[item.staff].gl += Number(item.gl);
-            staffMap[item.staff].excess += Number(item.excess);
+            // Grouping for the bottom table (Performance)
+            const staffKeyPerf = (item.staff || "Unknown").trim().toUpperCase();
+            if(!staffMap[staffKeyPerf]) {
+                staffMap[staffKeyPerf] = { 
+                    displayName: item.staff, 
+                    count: 0, 
+                    gl: 0, 
+                    excess: 0 
+                };
+            }
+            staffMap[staffKeyPerf].count++;
+            staffMap[staffKeyPerf].gl += Number(item.gl);
+            staffMap[staffKeyPerf].excess += Number(item.excess);
 
             // --- CHECK LIST LOGIC ---
             let allItemsChecked = true;
@@ -566,16 +622,20 @@
                 if (!isChecked) allItemsChecked = false; 
 
                 const checkboxHtml = item.status === 'Pending' 
-                    ? `<input type="checkbox" class="med-check" ${isChecked ? 'checked' : ''} onchange="toggleItemCheck(${item.id}, ${index})">` 
+                    ? `<input type="checkbox" class="med-check" ${isChecked ? 'checked' : ''} onclick="toggleItemCheck(${item.id}, ${index})">` 
                     : `<span style="color:#10b981; margin-right:5px;">✓</span>`; 
 
                 const textClass = isChecked ? 'item-done' : '';
+                
+                // Display DO Number if exists
+                const doBadge = m.doNumber ? `<span class="do-tag">DO: ${m.doNumber}</span>` : '';
 
                 return `
                     <tr>
                         <td class="${textClass}">
                             ${checkboxHtml}
                             ${m.name}
+                            ${doBadge}
                         </td>
                         <td style="text-align:right"><span class="item-qty">${m.qty}</span></td>
                     </tr>
@@ -642,15 +702,17 @@
             else historyBody.innerHTML += rowHtml;
         });
 
-        // --- RENDER TOP STAFF QUEUE ---
+        // --- RENDER TOP STAFF QUEUE (Grouped) ---
         if (Object.keys(pendingByStaff).length === 0) {
             queueContainer.innerHTML = '<div style="color:#94a3b8; font-style:italic; padding-left:5px;">No pending items in queue.</div>';
         } else {
-            for (let [staff, count] of Object.entries(pendingByStaff)) {
+            // Iterate through the grouped staff object
+            for (let key in pendingByStaff) {
+                const staffData = pendingByStaff[key];
                 queueContainer.innerHTML += `
                     <div class="staff-queue-card">
-                        <span class="staff-q-name">👤 ${staff}</span>
-                        <span class="staff-q-count">${count} Pending</span>
+                        <span class="staff-q-name">👤 ${staffData.displayName}</span>
+                        <span class="staff-q-count">${staffData.count} Pending</span>
                     </div>
                 `;
             }
@@ -658,13 +720,14 @@
 
         // Render Bottom Staff Stats
         staffBody.innerHTML = '';
-        for(let name in staffMap) {
+        for(let key in staffMap) {
+            const s = staffMap[key];
             staffBody.innerHTML += `
                 <tr>
-                    <td style="font-weight:600; padding-left:20px;">${name}</td>
-                    <td style="text-align:center;">${staffMap[name].count}</td>
-                    <td style="text-align:right;">₱${staffMap[name].gl.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
-                    <td style="text-align:right; padding-right:20px; font-weight:700; color:var(--success);">₱${staffMap[name].excess.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                    <td style="font-weight:600; padding-left:20px;">${s.displayName}</td>
+                    <td style="text-align:center;">${s.count}</td>
+                    <td style="text-align:right;">₱${s.gl.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                    <td style="text-align:right; padding-right:20px; font-weight:700; color:var(--success);">₱${s.excess.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
                 </tr>
             `;
         }
