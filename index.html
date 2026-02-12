@@ -3,305 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaTrack Pro v9.0 | Stock Balancing</title>
+    <title>PharmaTrack Pro v9.1 | Stock Balancing</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
             /* Professional Color Palette */
             --primary: #2563eb;       /* Royal Blue */
+            --primary-dark: #1e40af;
             --primary-light: #eff6ff; /* Soft Blue Bg */
             --secondary: #64748b;     /* Slate Text */
             --success: #10b981;       /* Green */
             --success-bg: #ecfdf5;    
-            --warning: #f59e0b;       /* Orange for Partial */
-            --danger: #ef4444;        /* Red for Missing/Delete */
-            --bg-body: #f8fafc;       /* Light Gray Background */
+            --warning: #f59e0b;       /* Orange */
+            --danger: #ef4444;        /* Red */
+            --bg-body: #f1f5f9;       /* Light Gray Background */
             --surface: #ffffff;       /* White Cards */
-            --border: #e2e8f0;        
-            --text-main: #1e293b;     
+            --border: #cbd5e1;        
+            --text-main: #0f172a;     
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            --radius: 12px;
+            --radius: 10px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         
-        body { background-color: var(--bg-body); color: var(--text-main); padding-bottom: 80px; font-size: 14px; }
+        body { 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            padding-bottom: 80px; 
+            font-size: 14px; 
+            line-height: 1.5;
+        }
 
         /* HEADER */
         .header { 
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
+            background: linear-gradient(135deg, #0f172a 0%, #334155 100%); 
             color: white; 
-            padding: 30px 20px 70px 20px; 
-            text-align: center; 
+            padding: 25px 30px 80px 30px; 
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .header h1 { font-weight: 800; letter-spacing: -0.5px; margin-bottom: 5px; font-size: 1.8rem; }
-        .header p { color: #94a3b8; font-size: 0.95rem; opacity: 0.9; }
+        .header div h1 { font-weight: 700; font-size: 1.6rem; letter-spacing: -0.5px; }
+        .header div p { color: #cbd5e1; font-size: 0.9rem; margin-top: 4px; }
 
         /* GRID LAYOUT */
         .container { 
-            max-width: 1600px; /* Made wider for better view */
+            width: 95%; 
+            max-width: 1800px; 
             margin: -50px auto 0; 
-            padding: 0 30px; 
             display: grid; 
-            grid-template-columns: 1fr; 
-            gap: 30px; 
+            grid-template-columns: 360px 1fr; 
+            gap: 25px; 
+            align-items: start;
         }
-        @media(min-width: 1300px) { .container { grid-template-columns: 380px 1fr; } }
+
+        @media(max-width: 1200px) { 
+            .container { grid-template-columns: 1fr; } 
+            .header { flex-direction: column; text-align: center; gap: 10px; }
+        }
 
         /* STATS CARDS */
         .stats-row { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
-            gap: 20px; 
             grid-column: 1 / -1; 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 10px;
         }
         .stat-card { 
+            background: var(--surface); 
+            padding: 20px 25px; 
+            border-radius: var(--radius); 
+            box-shadow: var(--shadow); 
+            border: 1px solid var(--border);
+            border-top: 4px solid transparent;
+        }
+        .stat-card h4 { font-size: 0.75rem; color: var(--secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px; }
+        .stat-card span { font-size: 1.8rem; font-weight: 800; color: var(--text-main); display: block; }
+
+        /* STAFF QUEUE */
+        .queue-wrapper {
+            grid-column: 1 / -1;
+            margin-bottom: 10px;
+        }
+        .queue-label { font-size: 0.85rem; font-weight: 600; color: var(--secondary); margin-bottom: 8px; margin-left: 5px; }
+        .staff-queue-row {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 5px;
+            padding-bottom: 15px;
+        }
+        .staff-queue-row::-webkit-scrollbar { height: 8px; }
+        .staff-queue-row::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 4px; }
+        .staff-queue-row::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+
+        .staff-queue-card {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            border-left: 4px solid #f59e0b; 
+            min-width: 160px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .staff-queue-card:hover { transform: translateY(-2px); border-color: var(--primary); }
+        .staff-queue-card.active-filter { background: var(--primary); border-left-color: #fff; color: white; border-color: var(--primary); }
+        .staff-queue-card.active-filter .staff-q-name { color: white; }
+        .staff-queue-card.active-filter .staff-q-count { background: white; color: var(--primary); }
+
+        .staff-q-name { font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
+        .staff-q-count { background: #fffbeb; color: #b45309; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; }
+
+        /* LEFT PANEL: FORM */
+        .card-form { 
             background: var(--surface); 
             padding: 25px; 
             border-radius: var(--radius); 
             box-shadow: var(--shadow); 
             border: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            border-top: 5px solid transparent;
-            transition: transform 0.2s;
-        }
-        .stat-card:hover { transform: translateY(-2px); }
-        .stat-card h4 { font-size: 0.8rem; color: var(--secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px; }
-        .stat-card span { font-size: 1.8rem; font-weight: 800; color: var(--text-main); }
-
-        /* --- STAFF QUEUE SECTION --- */
-        .staff-queue-row {
-            grid-column: 1 / -1;
-            display: flex;
-            gap: 15px;
-            overflow-x: auto;
-            padding: 5px 5px 15px 5px;
-        }
-        .staff-queue-row::-webkit-scrollbar { height: 8px; }
-        .staff-queue-row::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-        .staff-queue-row::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        .staff-queue-card {
-            background: white;
-            padding: 14px 18px;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            border-left: 5px solid #f59e0b; 
-            min-width: 180px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid var(--border);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            user-select: none;
-        }
-        .staff-queue-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1); }
-        
-        .staff-queue-card.active-filter {
-            background: var(--primary);
-            border-left-color: #1e3a8a;
-            border-color: #1e3a8a;
-        }
-        .staff-queue-card.active-filter .staff-q-name { color: white; }
-        .staff-queue-card.active-filter .staff-q-count { background: white; color: var(--primary); border-color: white; }
-
-        .staff-q-name { font-weight: 700; color: var(--text-main); font-size: 0.95rem; }
-        .staff-q-count { background: #fffbeb; color: #b45309; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; border: 1px solid #fcd34d; }
-
-        /* FORM PANEL (LEFT) */
-        .card-form { 
-            background: var(--surface); 
-            padding: 30px; 
-            border-radius: var(--radius); 
-            box-shadow: var(--shadow); 
             position: sticky; 
             top: 20px; 
-            border: 1px solid var(--border);
-            height: fit-content;
         }
-        .card-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid var(--border); color: var(--text-main); }
+        .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border); color: var(--text-main); }
         
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--secondary); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.3px; }
         .form-control { 
-            width: 100%; padding: 12px 14px; border: 1px solid var(--border); 
-            border-radius: 8px; font-size: 1rem; transition: all 0.2s; background: #f8fafc;
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border); 
+            border-radius: 6px; font-size: 0.95rem; background: #fff; color: var(--text-main);
+            transition: border-color 0.2s;
         }
-        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); background: white; }
+        .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
 
         /* Medicine Inputs */
-        .medicine-entry { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+        .medicine-entry { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
         .medicine-entry input.med-name { flex: 2; }
-        .medicine-entry input.med-qty { flex: 0.8; text-align: center; }
+        .medicine-entry input.med-qty { flex: 0.7; text-align: center; }
         .btn-remove-med { 
             background: #fee2e2; color: #ef4444; border: none; 
-            width: 40px; height: 42px; border-radius: 8px; cursor: pointer; font-size: 1.4rem; 
+            width: 32px; height: 38px; border-radius: 6px; cursor: pointer; font-size: 1.2rem; 
             display: flex; align-items: center; justify-content: center;
-            transition: 0.2s;
         }
         .btn-remove-med:hover { background: #fecaca; }
 
         .btn-add-med { 
-            width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 25px;
-            background: #f1f5f9; color: var(--secondary); border: 2px dashed #cbd5e1; 
-            border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+            width: 100%; padding: 10px; margin: 10px 0 20px;
+            background: #f8fafc; color: var(--primary); border: 1px dashed var(--primary); 
+            border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem;
             transition: 0.2s;
         }
-        .btn-add-med:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+        .btn-add-med:hover { background: var(--primary-light); }
 
         /* Calculation Box */
         .calc-box { 
             background: #f8fafc; border: 1px solid var(--border); 
-            border-radius: 10px; padding: 20px; display: grid; 
-            grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; 
+            border-radius: 8px; padding: 15px; display: grid; 
+            grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; 
         }
         .total-highlight { 
-            grid-column: span 2; background: var(--primary-light); border: 1px solid #bfdbfe; 
-            border-radius: 8px; padding: 15px; text-align: center; 
+            grid-column: span 2; background: #eff6ff; border: 1px solid #bfdbfe; 
+            border-radius: 6px; padding: 10px; text-align: center; 
         }
         .total-highlight input { 
             border: none; background: transparent; text-align: center; 
-            font-size: 1.8rem; font-weight: 800; color: #1e3a8a; width: 100%; outline: none;
+            font-size: 1.4rem; font-weight: 800; color: #1e3a8a; width: 100%; outline: none; margin-top: 5px;
         }
 
         .btn-submit { 
-            width: 100%; padding: 15px; background: var(--primary); color: white; 
-            border: none; border-radius: 10px; font-weight: 700; font-size: 1.1rem; 
-            cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+            width: 100%; padding: 12px; background: var(--primary); color: white; 
+            border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; 
+            cursor: pointer; transition: 0.2s; 
         }
-        .btn-submit:hover { background: #1d4ed8; transform: translateY(-2px); }
+        .btn-submit:hover { background: var(--primary-dark); transform: translateY(-1px); }
 
         /* RIGHT PANEL: TABS & TABLES */
-        .tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 12px; }
+        .right-col { display: flex; flex-direction: column; gap: 15px; }
+
+        .tabs { display: flex; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 0; }
         .tab-btn { 
-            padding: 10px 20px; border: none; background: transparent; 
-            border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--secondary); 
-            font-size: 0.95rem; transition: 0.2s;
+            padding: 12px 20px; border: none; background: transparent; 
+            border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600; color: var(--secondary); 
+            font-size: 0.9rem; border-bottom: 3px solid transparent;
+            margin-bottom: -1px;
         }
-        .tab-btn:hover { background: #f1f5f9; color: var(--text-main); }
-        .tab-btn.active { background: var(--primary-light); color: var(--primary); font-weight: 700; }
+        .tab-btn:hover { color: var(--text-main); background: rgba(0,0,0,0.02); }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: white; }
 
-        .tab-content { display: none; animation: fadeIn 0.3s ease; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* ----- MAIN TABLE STYLING (SPACIOUS) ----- */
+        /* ----- MAIN TABLE STYLING ----- */
+        .table-card {
+            background: white; border-radius: var(--radius);
+            box-shadow: var(--shadow); border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
         .table-wrapper { 
-            background: white; border-radius: var(--radius); 
-            box-shadow: var(--shadow); border: 1px solid var(--border); 
-            max-height: 75vh;
-            overflow-y: auto;
-            overflow-x: auto;
+            max-height: 75vh; overflow-y: auto; overflow-x: auto;
         }
-
-        .table-wrapper::-webkit-scrollbar { width: 10px; height: 10px; }
-        .table-wrapper::-webkit-scrollbar-track { background: #f1f5f9; }
-        .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #f1f5f9; }
         
-        table.main-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
+        table.main-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1000px; }
         
         table.main-table th { 
-            background: #f8fafc; 
-            padding: 18px 25px; 
-            text-align: left; 
-            font-size: 0.8rem; 
-            font-weight: 700; 
-            color: var(--secondary); 
-            text-transform: uppercase; 
-            letter-spacing: 0.05em; 
+            background: #f8fafc; padding: 16px 20px; text-align: left; 
+            font-size: 0.75rem; font-weight: 700; color: var(--secondary); 
+            text-transform: uppercase; letter-spacing: 0.05em; 
             border-bottom: 2px solid var(--border);
             position: sticky; top: 0; z-index: 10;
         }
         
-        table.main-table tr { background: white; }
-        table.main-table tr td { border-bottom: 1px solid var(--border); padding: 20px 25px; vertical-align: top; color: var(--text-main); font-size: 0.95rem; }
-        table.main-table tr:hover { background: #fcfcfc; }
+        table.main-table td { 
+            border-bottom: 1px solid var(--border); 
+            padding: 20px; 
+            vertical-align: top; 
+            color: var(--text-main); font-size: 0.95rem; 
+        }
+        table.main-table tr:last-child td { border-bottom: none; }
+        table.main-table tr:hover { background-color: #fcfcfc; }
 
-        /* Updated Column Widths for "Luag" */
-        .col-ref { width: 18%; }
-        .col-items { width: 45%; } /* Much wider for the checklist */
+        /* Main Table Column Widths */
+        .col-ref { width: 20%; }
+        .col-items { width: 45%; } 
         .col-fin { width: 15%; text-align: right; }
-        .col-staff { width: 12%; text-align: center; }
+        .col-staff { width: 10%; text-align: center; }
         .col-action { width: 10%; text-align: center; }
 
+        /* Badges & Text Styling */
         .so-badge { 
             display: inline-block; background: #e2e8f0; color: #475569; 
-            padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; margin-bottom: 6px;
+            padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; margin-bottom: 6px;
         }
-        .pat-name { font-weight: 700; color: var(--text-main); font-size: 1.1rem; display: block; margin-bottom: 4px;}
-        .date-meta { font-size: 0.8rem; color: #94a3b8; }
+        .pat-name { font-weight: 700; color: var(--text-main); font-size: 1.05rem; display: block; margin-bottom: 4px;}
+        .date-meta { font-size: 0.8rem; color: #94a3b8; display: block; }
 
-        /* ----- INNER TABLE (The Medicines - IMPROVED) ----- */
-        td.cell-breakdown { padding: 0 !important; background: #fafafa; border-bottom: 1px solid var(--border); } 
+        /* Financials Text */
+        .fin-block { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .fin-label { font-size: 0.75rem; color: #94a3b8; margin-right: 5px; }
+        .fin-val { font-weight: 600; color: var(--text-main); }
+        .fin-total { font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-top: 5px; border-top: 1px dashed #cbd5e1; padding-top: 5px; width: 100%; text-align: right; }
 
+        /* ----- INNER TABLE (The Medicines) ----- */
+        .inner-table-container {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fafafa;
+        }
         table.inner-table { width: 100%; border-collapse: collapse; }
         table.inner-table th { 
-            background: #f1f5f9; padding: 10px 15px; font-size: 0.75rem; color: #64748b; 
+            background: #f1f5f9; padding: 8px 12px; font-size: 0.7rem; color: #64748b; 
             border-bottom: 1px solid #e2e8f0; font-weight: 600; text-transform: uppercase;
-            border-right: 1px solid #f1f5f9;
+            text-align: left;
         }
         table.inner-table td { 
-            padding: 12px 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; color: #334155;
-            vertical-align: middle;
+            padding: 10px 12px; border-bottom: 1px solid #f1f5f9; 
+            font-size: 0.9rem; color: #334155; vertical-align: middle;
         }
         table.inner-table tr:last-child td { border-bottom: none; }
         
-        /* Column specifics for Inner Table */
-        .in-check { width: 40px; text-align: center; }
-        .in-item { width: 40%; }
-        .in-qty { width: 10%; text-align: center; }
-        .in-do { width: 25%; }
-        
-        /* Checkbox Styling */
-        .med-check { width: 20px; height: 20px; accent-color: var(--success); cursor: pointer; }
+        /* Inner Columns - UPDATED FOR REQ/GAVE/BAL */
+        .in-check { width: 30px; text-align: center; }
+        .in-item { width: 30%; }
+        .in-req { width: 10%; text-align: center; }
+        .in-gave { width: 10%; text-align: center; }
+        .in-bal { width: 10%; text-align: center; }
+        .in-do { width: 10%; text-align: right; } 
 
-        .do-badge-pill {
-            background: #eff6ff; color: #2563eb; 
-            padding: 4px 10px; border-radius: 6px; 
-            font-weight: 600; font-size: 0.85rem; 
-            border: 1px solid #bfdbfe; display: inline-block;
-            min-width: 80px; text-align: center;
-        }
+        /* Logic Badges */
+        .balance-alert { color: #dc2626; font-weight: 700; background: #fee2e2; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
+        .balance-ok { color: #10b981; font-weight: 700; background: #dcfce7; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
+        .do-badge-pill { background: white; border: 1px solid #cbd5e1; color: #475569; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-family: monospace; }
         .do-empty { color: #cbd5e1; font-style: italic; font-size: 0.8rem; }
-
-        .balance-alert { color: #dc2626; font-weight: 700; background: #fef2f2; padding: 2px 6px; border-radius: 4px; }
-        .balance-ok { color: #10b981; font-weight: 700; background: #ecfdf5; padding: 2px 6px; border-radius: 4px;}
-
-        /* Financials Text */
-        .fin-gl { font-size: 0.9rem; color: #64748b; margin-bottom: 4px; display: block; }
-        .fin-total { font-size: 1.1rem; font-weight: 700; color: var(--success); display: block; }
-
+        
         /* Buttons */
         .btn-complete { 
             background: var(--success); color: white; border: none; 
-            padding: 10px 18px; border-radius: 8px; cursor: pointer; 
-            font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); 
-            transition: all 0.3s; width: 100%;
+            padding: 8px 16px; border-radius: 6px; cursor: pointer; 
+            font-size: 0.85rem; font-weight: 600; 
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2); 
+            transition: all 0.2s; width: 100%; margin-bottom: 8px;
         }
-        .btn-complete:hover { background: #059669; transform: translateY(-1px); }
+        .btn-complete:hover { background: #059669; }
 
         .btn-delete {
-            background: white; color: #e11d48; border: 1px solid #fecdd3;
-            padding: 8px 12px; border-radius: 8px; cursor: pointer;
-            font-size: 0.8rem; font-weight: 600; margin-top: 10px;
-            display: inline-block; transition: 0.2s; width: 100%;
+            background: transparent; color: #ef4444; border: 1px solid #fecaca;
+            padding: 6px 12px; border-radius: 6px; cursor: pointer;
+            font-size: 0.75rem; font-weight: 600;
+            transition: 0.2s; width: 100%;
         }
-        .btn-delete:hover { background: #fff1f2; border-color: #e11d48; }
+        .btn-delete:hover { background: #fee2e2; }
 
-        /* Filter Info Tag */
+        /* Search & Filter Bar */
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
+        .search-input { 
+            flex: 1; padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 6px; 
+            font-size: 0.95rem; background: white; 
+        }
         .filter-tag {
-            display: none; background: #1e293b; color: white;
-            padding: 8px 15px; border-radius: 8px; font-size: 0.9rem;
-            margin-top: 10px; align-items: center; justify-content: space-between;
-            max-width: fit-content; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            display: none; background: #334155; color: white;
+            padding: 8px 15px; border-radius: 6px; font-size: 0.85rem;
+            align-items: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .filter-tag.show { display: flex; }
-        .filter-close { cursor: pointer; margin-left: 15px; opacity: 0.7; font-weight: bold; }
+        .filter-close { cursor: pointer; font-weight: bold; opacity: 0.8; }
         .filter-close:hover { opacity: 1; }
 
     </style>
@@ -309,8 +323,13 @@
 <body>
 
 <div class="header">
-    <h1>PharmaTrack Pro v9.0</h1>
-    <p>Enhanced Inventory & General Ledger Management System</p>
+    <div>
+        <h1>PharmaTrack Pro v9.1</h1>
+        <p>Stock Balancing & General Ledger Management System</p>
+    </div>
+    <div style="text-align: right; opacity: 0.8; font-size: 0.85rem;">
+        <span id="dateTimeDisplay">--/--/----</span>
+    </div>
 </div>
 
 <div class="container">
@@ -330,9 +349,11 @@
         </div>
     </div>
 
-    <h4 style="grid-column: 1/-1; margin-bottom:-15px; margin-top:10px; color:var(--secondary); font-weight:600;">Pharmacist Queue (Click to Filter)</h4>
-    <div class="staff-queue-row" id="staffQueueContainer">
-        </div>
+    <div class="queue-wrapper">
+        <div class="queue-label">Pharmacist Queue (Click to Filter)</div>
+        <div class="staff-queue-row" id="staffQueueContainer">
+            </div>
+    </div>
 
     <div class="card-form">
         <h3 class="card-title">New Transaction</h3>
@@ -347,7 +368,7 @@
             </div>
 
             <div style="margin: 25px 0 15px;">
-                <label style="margin-bottom: 12px; border-bottom:1px solid #e2e8f0; padding-bottom:5px;">Prescription Items</label>
+                <label style="border-bottom:1px solid #e2e8f0; padding-bottom:5px; margin-bottom:12px; display:block;">Prescription Items</label>
                 <div id="medicineRows">
                     <div class="medicine-entry">
                         <input type="text" placeholder="Item Name" class="form-control med-name" required>
@@ -386,64 +407,71 @@
         <div class="tabs">
             <button class="tab-btn active" id="btn-pending-tab" onclick="switchTab(event, 'pending-tab')">Active Queue</button>
             <button class="tab-btn" id="btn-history-tab" onclick="switchTab(event, 'history-tab')">Transaction History</button>
-            <button class="tab-btn" id="btn-staff-tab" onclick="switchTab(event, 'staff-tab')">Staff Stats</button>
+            <button class="tab-btn" id="btn-staff-tab" onclick="switchTab(event, 'staff-tab')">Staff Performance</button>
         </div>
 
         <div id="pending-tab" class="tab-content active">
-            <div style="margin-bottom: 15px; display:flex; gap:10px; flex-wrap:wrap;">
-                <input type="text" id="pendingSearch" class="form-control" placeholder="🔍 Search SO, Patient, or Staff Name..." onkeyup="render()" style="background: white; border-color: #cbd5e1; flex:1;">
-            </div>
-            <div id="activeFilterDisplay" class="filter-tag">
-                <span id="filterText">Filtering by Staff</span>
-                <span class="filter-close" onclick="clearStaffFilter()">✕ Clear Filter</span>
+            <div class="filter-bar">
+                <input type="text" id="pendingSearch" class="search-input" placeholder="🔍 Search SO, Patient, or Staff Name..." onkeyup="render()">
+                
+                <div id="activeFilterDisplay" class="filter-tag">
+                    <span id="filterText">Filtering by Staff</span>
+                    <span class="filter-close" onclick="clearStaffFilter()">✕</span>
+                </div>
             </div>
 
-            <div class="table-wrapper">
-                <table class="main-table">
-                    <thead>
-                        <tr>
-                            <th class="col-ref">Reference Details</th>
-                            <th class="col-items" style="padding-left:15px">Order Breakdown & Delivery</th>
-                            <th class="col-fin">Financials</th>
-                            <th class="col-staff">Staff</th>
-                            <th class="col-action">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pendingBody"></tbody>
-                </table>
+            <div class="table-card">
+                <div class="table-wrapper">
+                    <table class="main-table">
+                        <thead>
+                            <tr>
+                                <th class="col-ref">Reference Details</th>
+                                <th class="col-items">Order Breakdown & Delivery</th>
+                                <th class="col-fin">Financials</th>
+                                <th class="col-staff">Staff</th>
+                                <th class="col-action">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div id="history-tab" class="tab-content">
-            <div class="table-wrapper">
-                <table class="main-table">
-                    <thead>
-                        <tr>
-                            <th class="col-ref">Reference Details</th>
-                            <th class="col-items" style="padding-left:15px">Order History (Read Only)</th>
-                            <th class="col-fin">Financials</th>
-                            <th class="col-staff">Staff</th>
-                            <th class="col-action">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyBody"></tbody>
-                </table>
+            <div class="table-card">
+                <div class="table-wrapper">
+                    <table class="main-table">
+                        <thead>
+                            <tr>
+                                <th class="col-ref">Reference Details</th>
+                                <th class="col-items">Order History (Read Only)</th>
+                                <th class="col-fin">Financials</th>
+                                <th class="col-staff">Staff</th>
+                                <th class="col-action">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div id="staff-tab" class="tab-content">
-            <div class="table-wrapper">
-                <table class="main-table">
-                    <thead>
-                        <tr>
-                            <th style="padding-left: 25px;">Pharmacist Name</th>
-                            <th style="text-align: center;">Transactions</th>
-                            <th style="text-align: right;">Total GL</th>
-                            <th style="text-align: right; padding-right:25px;">Total Cash</th>
-                        </tr>
-                    </thead>
-                    <tbody id="staffBody"></tbody>
-                </table>
+            <div class="table-card">
+                <div class="table-wrapper">
+                    <table class="main-table">
+                        <thead>
+                            <tr>
+                                <th style="padding-left: 25px;">Pharmacist Name</th>
+                                <th style="text-align: center;">Transactions</th>
+                                <th style="text-align: right;">Total GL</th>
+                                <th style="text-align: right; padding-right:25px;">Total Cash</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staffBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -451,9 +479,14 @@
 
 <script>
     // --- JAVASCRIPT LOGIC ---
-    // Using v9 key to reset data for new structure
     let db = JSON.parse(localStorage.getItem('pharmaDB_v9')) || [];
     let activeStaffFilter = null; 
+
+    // Date Time Display
+    setInterval(() => {
+        const now = new Date();
+        document.getElementById('dateTimeDisplay').textContent = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+    }, 1000);
 
     // --- TAB SWITCHER ---
     function switchTab(evt, tabId) {
@@ -591,7 +624,6 @@
     window.complete = (id) => {
         const idx = db.findIndex(i => i.id === id);
         if (idx > -1) {
-            // Check if all items are fully served
             const incomplete = db[idx].medicines.some(m => !m.checked);
             if(incomplete) {
                 if(!confirm("Warning: Some items are not fully dispensed. Complete anyway?")) return;
@@ -650,6 +682,7 @@
         pendingBody.innerHTML = '';
         historyBody.innerHTML = '';
         queueContainer.innerHTML = '';
+        staffBody.innerHTML = '';
         
         let totalGL = 0; let totalExcess = 0; let pendingCount = 0;
         const staffMap = {}; 
@@ -687,123 +720,129 @@
             
             if (!matchesSearch) return;
 
-            // --- Build Medicine Table HTML ---
-            // This is used for both Pending and History to ensure consistent wide view
+            // --- Build Medicine Table HTML (UPDATED FOR REQ/GAVE/BAL) ---
             const medRowsHtml = item.medicines.map((m, index) => {
                 const isChecked = m.checked === true;
                 const balance = m.qty - (m.fulfilled || 0);
                 const balanceClass = balance > 0 ? 'balance-alert' : 'balance-ok';
-                const doDisplay = m.doNumber ? `<span class="do-badge-pill">${m.doNumber}</span>` : `<span class="do-empty">-- No D.O --</span>`;
+                const doDisplay = m.doNumber ? `<span class="do-badge-pill">${m.doNumber}</span>` : `<span class="do-empty">--</span>`;
                 
-                // Pending View Input
-                const checkboxHtml = item.status === 'Pending' 
-                    ? `<input type="checkbox" class="med-check" ${isChecked ? 'checked' : ''} onclick="handleCheck(event, ${item.id}, ${index})">` 
+                // Logic: Only clickable if pending
+                const checkStatus = item.status === 'Pending' 
+                    ? `<input type="checkbox" class="med-check" style="width:18px; height:18px; cursor:pointer;" ${isChecked ? 'checked' : ''} onclick="handleCheck(event, ${item.id}, ${index})">` 
                     : (isChecked ? `<span style="color:#10b981; font-weight:bold;">✓</span>` : `<span style="color:#ef4444;">✕</span>`); 
 
                 return `
                     <tr>
-                        <td class="in-check" style="text-align:center">${checkboxHtml}</td>
-                        <td class="in-item">
-                            <div style="font-weight:600;">${m.name}</div>
-                        </td>
-                        <td class="in-qty">
-                            <span style="background:#f1f5f9; padding:2px 8px; border-radius:4px;">${m.qty}</span>
-                        </td>
-                        <td class="in-qty" style="color:var(--primary); font-weight:600;">
-                            ${m.fulfilled || 0}
-                        </td>
-                         <td class="in-qty">
-                            <span class="${balanceClass}">${balance}</span>
-                        </td>
-                        <td class="in-do" style="text-align:center;">${doDisplay}</td>
+                        <td class="in-check">${checkStatus}</td>
+                        <td class="in-item">${m.name}</td>
+                        <td class="in-req">${m.qty}</td>
+                        <td class="in-gave">${m.fulfilled || 0}</td>
+                        <td class="in-bal"><span class="${balanceClass}">${balance}</span></td>
+                        <td class="in-do">${doDisplay}</td>
                     </tr>
                 `;
             }).join('');
 
-            const rowHtml = `
-                <tr>
+            // --- Table Header with Item | Req | Gave | Bal | D.O. # ---
+            const innerTable = `
+                <div class="inner-table-container">
+                    <table class="inner-table">
+                        <thead>
+                            <tr>
+                                <th class="in-check"></th>
+                                <th class="in-item">Item</th>
+                                <th class="in-req">Req</th>
+                                <th class="in-gave">Gave</th>
+                                <th class="in-bal">Bal</th>
+                                <th class="in-do">D.O. #</th>
+                            </tr>
+                        </thead>
+                        <tbody>${medRowsHtml}</tbody>
+                    </table>
+                </div>
+            `;
+
+            const financialCol = `
+                <div class="fin-block">
+                    <div><span class="fin-label">Total:</span><span class="fin-val">₱${item.total.toLocaleString()}</span></div>
+                    <div><span class="fin-label">GL:</span><span class="fin-val">₱${item.gl.toLocaleString()}</span></div>
+                    <div class="fin-total">CASH: ₱${item.excess.toLocaleString()}</div>
+                </div>
+            `;
+
+            // --- PENDING LIST ---
+            if(item.status === 'Pending') {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
                     <td>
                         <span class="so-badge">${item.so}</span>
                         <span class="pat-name">${item.patient}</span>
-                        <div class="date-meta">${item.date}</div>
+                        <span class="date-meta">${item.date}</span>
                     </td>
-                    <td class="cell-breakdown">
-                        <table class="inner-table">
-                            <thead>
-                                <tr>
-                                    <th>Status</th>
-                                    <th>Item Name</th>
-                                    <th>Ord</th>
-                                    <th>Gvn</th>
-                                    <th>Bal</th>
-                                    <th>D.O. Reference</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${medRowsHtml}
-                            </tbody>
-                        </table>
+                    <td>${innerTable}</td>
+                    <td>${financialCol}</td>
+                    <td style="text-align:center; font-weight:600;">${item.staff}</td>
+                    <td>
+                        <button class="btn-complete" onclick="complete(${item.id})">Complete</button>
+                        <button class="btn-delete" onclick="deleteTransaction(${item.id})">Delete</button>
                     </td>
-                    <td style="text-align:right;">
-                        <span class="fin-gl">GL: ₱ ${Number(item.gl).toLocaleString('en-US', {minimumFractionDigits:2})}</span>
-                        <span class="fin-total">Excess: ₱ ${Number(item.excess).toLocaleString('en-US', {minimumFractionDigits:2})}</span>
-                        <div style="font-size:0.8rem; margin-top:5px; color:#94a3b8;">Tot: ₱ ${Number(item.total).toLocaleString('en-US')}</div>
+                `;
+                pendingBody.appendChild(tr);
+            } 
+            // --- HISTORY LIST ---
+            else {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <span class="so-badge">${item.so}</span>
+                        <span class="pat-name">${item.patient}</span>
+                        <span class="date-meta">${item.date}</span>
                     </td>
+                    <td>${innerTable}</td>
+                    <td>${financialCol}</td>
+                    <td style="text-align:center; font-weight:600;">${item.staff}</td>
                     <td style="text-align:center;">
-                        <div style="font-weight:600; color:var(--text-main);">${item.staff}</div>
+                        <span class="balance-ok" style="display:block; margin-bottom:8px;">${item.status}</span>
+                        <button class="btn-delete" onclick="deleteTransaction(${item.id})">Delete</button>
                     </td>
-                    <td style="text-align:center;">
-                        ${item.status === 'Pending' 
-                            ? `<button class="btn-complete" onclick="complete(${item.id})">Complete</button>
-                               <button class="btn-delete" onclick="deleteTransaction(${item.id})">Delete</button>` 
-                            : `<span style="color:var(--success); font-weight:bold; background:#ecfdf5; padding:5px 10px; border-radius:6px; display:block;">Completed</span>
-                               <button class="btn-delete" onclick="deleteTransaction(${item.id})" style="margin-top:5px;">Remove</button>`
-                        }
-                    </td>
-                </tr>
-            `;
-
-            if(item.status === 'Pending') {
-                pendingBody.innerHTML += rowHtml;
-            } else {
-                historyBody.innerHTML += rowHtml;
+                `;
+                historyBody.appendChild(tr);
             }
         });
 
-        // --- Render Staff Cards ---
-        Object.keys(pendingByStaff).forEach(key => {
-            const s = pendingByStaff[key];
+        // Update Stats
+        document.getElementById('stat-pending').textContent = pendingCount;
+        document.getElementById('stat-gl').textContent = '₱ ' + totalGL.toLocaleString('en-US', {minimumFractionDigits:2});
+        document.getElementById('stat-excess').textContent = '₱ ' + totalExcess.toLocaleString('en-US', {minimumFractionDigits:2});
+
+        // Render Queue
+        Object.keys(pendingByStaff).forEach(k => {
+            const s = pendingByStaff[k];
             const div = document.createElement('div');
-            div.className = `staff-queue-card ${activeStaffFilter === key ? 'active-filter' : ''}`;
-            div.onclick = () => filterByStaff(key);
+            div.className = 'staff-queue-card ' + (activeStaffFilter === k ? 'active-filter' : '');
+            div.onclick = () => filterByStaff(k);
             div.innerHTML = `
                 <span class="staff-q-name">${s.displayName}</span>
-                <span class="staff-q-count">${s.count} Pend</span>
+                <span class="staff-q-count">${s.count}</span>
             `;
             queueContainer.appendChild(div);
         });
 
-        // --- Render Stats ---
-        document.getElementById('stat-pending').textContent = pendingCount;
-        document.getElementById('stat-gl').textContent = '₱ ' + totalGL.toLocaleString('en-US', {minimumFractionDigits: 2});
-        document.getElementById('stat-excess').textContent = '₱ ' + totalExcess.toLocaleString('en-US', {minimumFractionDigits: 2});
-
-        // --- Render Staff Perf Table ---
-        staffBody.innerHTML = '';
-        Object.keys(staffMap).forEach(key => {
-            const s = staffMap[key];
-            staffBody.innerHTML += `
-                <tr>
-                    <td style="padding-left:25px; font-weight:600;">${s.displayName}</td>
-                    <td style="text-align:center;">${s.count}</td>
-                    <td style="text-align:right;">₱ ${s.gl.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
-                    <td style="text-align:right; padding-right:25px; font-weight:700; color:var(--success);">₱ ${s.excess.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
-                </tr>
+        // Render Staff Performance
+        Object.keys(staffMap).forEach(k => {
+            const s = staffMap[k];
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding-left: 25px; font-weight:600;">${s.displayName}</td>
+                <td style="text-align: center;">${s.count}</td>
+                <td style="text-align: right;">₱ ${s.gl.toLocaleString()}</td>
+                <td style="text-align: right; padding-right:25px;">₱ ${s.excess.toLocaleString()}</td>
             `;
+            staffBody.appendChild(tr);
         });
     }
 
-    // Initialize
     render();
 </script>
 
