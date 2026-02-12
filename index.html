@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaTrack Pro v8 | Queue & Search</title>
+    <title>PharmaTrack Pro v9.0 | Stock Balancing</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
@@ -14,150 +14,142 @@
             --secondary: #64748b;     /* Slate Text */
             --success: #10b981;       /* Green */
             --success-bg: #ecfdf5;    
-            --bg-body: #f1f5f9;       /* Light Gray Background */
+            --warning: #f59e0b;       /* Orange for Partial */
+            --danger: #ef4444;        /* Red for Missing/Delete */
+            --bg-body: #f8fafc;       /* Light Gray Background */
             --surface: #ffffff;       /* White Cards */
             --border: #e2e8f0;        
             --text-main: #1e293b;     
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            --radius: 10px;
+            --radius: 12px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         
-        body { background-color: var(--bg-body); color: var(--text-main); padding-bottom: 60px; font-size: 14px; }
+        body { background-color: var(--bg-body); color: var(--text-main); padding-bottom: 80px; font-size: 14px; }
 
         /* HEADER */
         .header { 
-            background: #0f172a; 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
             color: white; 
-            padding: 30px 20px 60px 20px; 
+            padding: 30px 20px 70px 20px; 
             text-align: center; 
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
-        .header h1 { font-weight: 700; letter-spacing: -0.5px; margin-bottom: 5px; }
-        .header p { color: #94a3b8; font-size: 0.9rem; opacity: 0.8; }
+        .header h1 { font-weight: 800; letter-spacing: -0.5px; margin-bottom: 5px; font-size: 1.8rem; }
+        .header p { color: #94a3b8; font-size: 0.95rem; opacity: 0.9; }
 
         /* GRID LAYOUT */
         .container { 
-            max-width: 1400px; 
-            margin: -40px auto 0; 
-            padding: 0 20px; 
+            max-width: 1600px; /* Made wider for better view */
+            margin: -50px auto 0; 
+            padding: 0 30px; 
             display: grid; 
             grid-template-columns: 1fr; 
-            gap: 25px; 
+            gap: 30px; 
         }
-        @media(min-width: 1200px) { .container { grid-template-columns: 360px 1fr; } }
+        @media(min-width: 1300px) { .container { grid-template-columns: 380px 1fr; } }
 
         /* STATS CARDS */
         .stats-row { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 15px; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 20px; 
             grid-column: 1 / -1; 
         }
         .stat-card { 
             background: var(--surface); 
-            padding: 20px; 
+            padding: 25px; 
             border-radius: var(--radius); 
             box-shadow: var(--shadow); 
             border: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             justify-content: center;
-            border-top: 4px solid transparent;
+            border-top: 5px solid transparent;
+            transition: transform 0.2s;
         }
-        .stat-card h4 { font-size: 0.75rem; color: var(--secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
-        .stat-card span { font-size: 1.6rem; font-weight: 700; color: var(--text-main); }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-card h4 { font-size: 0.8rem; color: var(--secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .stat-card span { font-size: 1.8rem; font-weight: 800; color: var(--text-main); }
 
-        /* --- NEW STAFF QUEUE SECTION --- */
+        /* --- STAFF QUEUE SECTION --- */
         .staff-queue-row {
             grid-column: 1 / -1;
             display: flex;
             gap: 15px;
             overflow-x: auto;
-            padding-bottom: 8px; /* Added padding for hover effect space */
+            padding: 5px 5px 15px 5px;
         }
-        /* Custom Scrollbar for Queue */
-        .staff-queue-row::-webkit-scrollbar { height: 6px; }
-        .staff-queue-row::-webkit-scrollbar-track { background: #f1f5f9; }
+        .staff-queue-row::-webkit-scrollbar { height: 8px; }
+        .staff-queue-row::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
         .staff-queue-row::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
         .staff-queue-card {
             background: white;
-            padding: 12px 15px;
+            padding: 14px 18px;
             border-radius: var(--radius);
             box-shadow: var(--shadow);
-            border-left: 4px solid #f59e0b; /* Orange for pending urgency */
-            min-width: 160px;
+            border-left: 5px solid #f59e0b; 
+            min-width: 180px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border: 1px solid var(--border);
-            cursor: pointer; /* Clickable */
+            cursor: pointer;
             transition: all 0.2s ease;
             user-select: none;
         }
-        .staff-queue-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
+        .staff-queue-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1); }
         
-        /* ACTIVE FILTER STATE (When Clicked) */
         .staff-queue-card.active-filter {
             background: var(--primary);
-            border-left-color: #1d4ed8;
-            border-color: #1d4ed8;
+            border-left-color: #1e3a8a;
+            border-color: #1e3a8a;
         }
         .staff-queue-card.active-filter .staff-q-name { color: white; }
-        .staff-queue-card.active-filter .staff-q-count { 
-            background: white; 
-            color: var(--primary); 
-            border-color: white; 
-        }
+        .staff-queue-card.active-filter .staff-q-count { background: white; color: var(--primary); border-color: white; }
 
-        .staff-q-name { font-weight: 700; color: var(--text-main); font-size: 0.9rem; }
-        .staff-q-count { background: #fffbeb; color: #b45309; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; border: 1px solid #fcd34d; }
+        .staff-q-name { font-weight: 700; color: var(--text-main); font-size: 0.95rem; }
+        .staff-q-count { background: #fffbeb; color: #b45309; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; border: 1px solid #fcd34d; }
 
         /* FORM PANEL (LEFT) */
         .card-form { 
             background: var(--surface); 
-            padding: 25px; 
+            padding: 30px; 
             border-radius: var(--radius); 
             box-shadow: var(--shadow); 
             position: sticky; 
             top: 20px; 
             border: 1px solid var(--border);
+            height: fit-content;
         }
-        .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); color: var(--text-main); }
+        .card-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid var(--border); color: var(--text-main); }
         
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--secondary); }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--secondary); }
         .form-control { 
-            width: 100%; 
-            padding: 10px 12px; 
-            border: 1px solid var(--border); 
-            border-radius: 6px; 
-            font-size: 0.95rem; 
-            transition: all 0.2s;
-            background: #f8fafc;
+            width: 100%; padding: 12px 14px; border: 1px solid var(--border); 
+            border-radius: 8px; font-size: 1rem; transition: all 0.2s; background: #f8fafc;
         }
         .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); background: white; }
 
         /* Medicine Inputs */
-        .medicine-entry { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+        .medicine-entry { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
         .medicine-entry input.med-name { flex: 2; }
-        .medicine-entry input.med-qty { flex: 0.7; text-align: center; }
+        .medicine-entry input.med-qty { flex: 0.8; text-align: center; }
         .btn-remove-med { 
             background: #fee2e2; color: #ef4444; border: none; 
-            width: 35px; height: 38px; border-radius: 6px; cursor: pointer; font-size: 1.2rem; 
+            width: 40px; height: 42px; border-radius: 8px; cursor: pointer; font-size: 1.4rem; 
             display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
         }
         .btn-remove-med:hover { background: #fecaca; }
 
         .btn-add-med { 
-            width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 20px;
-            background: #f1f5f9; color: var(--secondary); border: 1px dashed #cbd5e1; 
-            border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem;
+            width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 25px;
+            background: #f1f5f9; color: var(--secondary); border: 2px dashed #cbd5e1; 
+            border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
             transition: 0.2s;
         }
         .btn-add-med:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
@@ -165,203 +157,151 @@
         /* Calculation Box */
         .calc-box { 
             background: #f8fafc; border: 1px solid var(--border); 
-            border-radius: 8px; padding: 15px; display: grid; 
-            grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; 
+            border-radius: 10px; padding: 20px; display: grid; 
+            grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; 
         }
         .total-highlight { 
             grid-column: span 2; background: var(--primary-light); border: 1px solid #bfdbfe; 
-            border-radius: 6px; padding: 10px; text-align: center; 
+            border-radius: 8px; padding: 15px; text-align: center; 
         }
-        .total-highlight label { color: var(--primary); margin-bottom: 0; }
         .total-highlight input { 
             border: none; background: transparent; text-align: center; 
-            font-size: 1.5rem; font-weight: 800; color: #1e3a8a; width: 100%; outline: none;
+            font-size: 1.8rem; font-weight: 800; color: #1e3a8a; width: 100%; outline: none;
         }
 
         .btn-submit { 
-            width: 100%; padding: 12px; background: var(--primary); color: white; 
-            border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; 
-            cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+            width: 100%; padding: 15px; background: var(--primary); color: white; 
+            border: none; border-radius: 10px; font-weight: 700; font-size: 1.1rem; 
+            cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
         }
-        .btn-submit:hover { background: #1d4ed8; transform: translateY(-1px); }
+        .btn-submit:hover { background: #1d4ed8; transform: translateY(-2px); }
 
         /* RIGHT PANEL: TABS & TABLES */
-        .tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 12px; }
         .tab-btn { 
-            padding: 8px 16px; border: none; background: transparent; 
-            border-radius: 6px; cursor: pointer; font-weight: 600; color: var(--secondary); 
-            font-size: 0.9rem; transition: 0.2s;
+            padding: 10px 20px; border: none; background: transparent; 
+            border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--secondary); 
+            font-size: 0.95rem; transition: 0.2s;
         }
         .tab-btn:hover { background: #f1f5f9; color: var(--text-main); }
-        .tab-btn.active { background: var(--primary-light); color: var(--primary); }
+        .tab-btn.active { background: var(--primary-light); color: var(--primary); font-weight: 700; }
 
         .tab-content { display: none; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ----- MAIN TABLE STYLING (SCROLLABLE) ----- */
+        /* ----- MAIN TABLE STYLING (SPACIOUS) ----- */
         .table-wrapper { 
             background: white; border-radius: var(--radius); 
             box-shadow: var(--shadow); border: 1px solid var(--border); 
-            max-height: 600px;
+            max-height: 75vh;
             overflow-y: auto;
             overflow-x: auto;
-            position: relative;
         }
 
-        /* Custom Scrollbar for Table */
-        .table-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
+        .table-wrapper::-webkit-scrollbar { width: 10px; height: 10px; }
         .table-wrapper::-webkit-scrollbar-track { background: #f1f5f9; }
-        .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .table-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .table-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #f1f5f9; }
         
-        table.main-table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        table.main-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
         
         table.main-table th { 
             background: #f8fafc; 
-            padding: 16px 20px; 
+            padding: 18px 25px; 
             text-align: left; 
-            font-size: 0.75rem; 
+            font-size: 0.8rem; 
             font-weight: 700; 
             color: var(--secondary); 
             text-transform: uppercase; 
             letter-spacing: 0.05em; 
-            border-bottom: 1px solid var(--border);
-            
-            /* Sticky Header */
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            border-bottom: 2px solid var(--border);
+            position: sticky; top: 0; z-index: 10;
         }
         
-        table.main-table tr { border-bottom: 1px solid var(--border); }
-        table.main-table tr:last-child { border-bottom: none; }
-        table.main-table tr:hover { background: #fdfdfd; }
+        table.main-table tr { background: white; }
+        table.main-table tr td { border-bottom: 1px solid var(--border); padding: 20px 25px; vertical-align: top; color: var(--text-main); font-size: 0.95rem; }
+        table.main-table tr:hover { background: #fcfcfc; }
 
-        table.main-table td { padding: 16px 20px; vertical-align: top; color: var(--text-main); font-size: 0.9rem; }
-
-        /* Column Widths */
+        /* Updated Column Widths for "Luag" */
         .col-ref { width: 18%; }
-        .col-items { width: 35%; }
-        .col-fin { width: 20%; text-align: right; }
-        .col-staff { width: 15%; text-align: center; }
-        .col-action { width: 12%; text-align: center; }
+        .col-items { width: 45%; } /* Much wider for the checklist */
+        .col-fin { width: 15%; text-align: right; }
+        .col-staff { width: 12%; text-align: center; }
+        .col-action { width: 10%; text-align: center; }
 
         .so-badge { 
             display: inline-block; background: #e2e8f0; color: #475569; 
-            padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; margin-bottom: 4px;
+            padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; margin-bottom: 6px;
         }
-        .pat-name { font-weight: 700; color: var(--text-main); font-size: 0.95rem; }
+        .pat-name { font-weight: 700; color: var(--text-main); font-size: 1.1rem; display: block; margin-bottom: 4px;}
+        .date-meta { font-size: 0.8rem; color: #94a3b8; }
 
-        /* ----- INNER TABLE (The Medicines) ----- */
-        td.cell-breakdown { padding: 0 !important; } 
+        /* ----- INNER TABLE (The Medicines - IMPROVED) ----- */
+        td.cell-breakdown { padding: 0 !important; background: #fafafa; border-bottom: 1px solid var(--border); } 
 
         table.inner-table { width: 100%; border-collapse: collapse; }
         table.inner-table th { 
-            background: #fafafa; padding: 6px 15px; font-size: 0.7rem; color: #94a3b8; border-bottom: 1px solid #f1f5f9;
+            background: #f1f5f9; padding: 10px 15px; font-size: 0.75rem; color: #64748b; 
+            border-bottom: 1px solid #e2e8f0; font-weight: 600; text-transform: uppercase;
+            border-right: 1px solid #f1f5f9;
         }
         table.inner-table td { 
-            padding: 6px 15px; border-bottom: 1px dashed #f1f5f9; font-size: 0.85rem; color: #334155;
+            padding: 12px 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; color: #334155;
+            vertical-align: middle;
         }
         table.inner-table tr:last-child td { border-bottom: none; }
         
+        /* Column specifics for Inner Table */
+        .in-check { width: 40px; text-align: center; }
+        .in-item { width: 40%; }
+        .in-qty { width: 10%; text-align: center; }
+        .in-do { width: 25%; }
+        
         /* Checkbox Styling */
-        .med-check {
-            width: 16px; height: 16px; 
-            accent-color: var(--success); 
-            cursor: pointer;
-            vertical-align: middle;
-            margin-right: 8px;
-        }
+        .med-check { width: 20px; height: 20px; accent-color: var(--success); cursor: pointer; }
 
-        .item-done { 
-            text-decoration: line-through; 
-            color: #94a3b8; 
-            opacity: 0.7; 
+        .do-badge-pill {
+            background: #eff6ff; color: #2563eb; 
+            padding: 4px 10px; border-radius: 6px; 
+            font-weight: 600; font-size: 0.85rem; 
+            border: 1px solid #bfdbfe; display: inline-block;
+            min-width: 80px; text-align: center;
         }
+        .do-empty { color: #cbd5e1; font-style: italic; font-size: 0.8rem; }
 
-        .item-qty { 
-            background: #f1f5f9; color: #64748b; 
-            padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; 
-        }
+        .balance-alert { color: #dc2626; font-weight: 700; background: #fef2f2; padding: 2px 6px; border-radius: 4px; }
+        .balance-ok { color: #10b981; font-weight: 700; background: #ecfdf5; padding: 2px 6px; border-radius: 4px;}
 
         /* Financials Text */
-        .fin-gl { font-size: 0.85rem; color: #64748b; margin-bottom: 2px; }
-        .fin-total { font-size: 1rem; font-weight: 700; color: var(--success); }
+        .fin-gl { font-size: 0.9rem; color: #64748b; margin-bottom: 4px; display: block; }
+        .fin-total { font-size: 1.1rem; font-weight: 700; color: var(--success); display: block; }
 
-        /* Buttons & Badges */
+        /* Buttons */
         .btn-complete { 
             background: var(--success); color: white; border: none; 
-            padding: 8px 14px; border-radius: 6px; cursor: pointer; 
-            font-size: 0.8rem; font-weight: 600; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2); 
-            transition: all 0.3s;
-            width: 100%;
+            padding: 10px 18px; border-radius: 8px; cursor: pointer; 
+            font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); 
+            transition: all 0.3s; width: 100%;
         }
-        .btn-complete:hover { background: #059669; }
+        .btn-complete:hover { background: #059669; transform: translateY(-1px); }
 
-        /* DELETE BUTTON STYLE */
         .btn-delete {
-            background: #fff1f2;
-            color: #e11d48;
-            border: 1px solid #fecdd3;
-            padding: 6px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-top: 8px;
-            display: inline-block;
-            transition: 0.2s;
-            width: 100%;
+            background: white; color: #e11d48; border: 1px solid #fecdd3;
+            padding: 8px 12px; border-radius: 8px; cursor: pointer;
+            font-size: 0.8rem; font-weight: 600; margin-top: 10px;
+            display: inline-block; transition: 0.2s; width: 100%;
         }
-        .btn-delete:hover {
-            background: #e11d48;
-            color: white;
-            border-color: #e11d48;
-        }
+        .btn-delete:hover { background: #fff1f2; border-color: #e11d48; }
 
-        /* DISABLED BUTTON STYLE */
-        .btn-disabled {
-            background: #cbd5e1 !important;
-            color: #94a3b8 !important;
-            box-shadow: none !important;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-
-        .badge-done { 
-            color: var(--success); font-weight: 700; background: var(--success-bg); 
-            padding: 6px 12px; border-radius: 20px; border: 1px solid #d1fae5; font-size: 0.8rem; display: block; margin-bottom: 5px;
-        }
-
-        .do-tag {
-            font-size: 0.7rem;
-            background: #dbeafe;
-            color: #1e40af;
-            padding: 1px 5px;
-            border-radius: 3px;
-            margin-left: 5px;
-            font-weight: 600;
-            display: inline-block;
-            text-decoration: none !important;
-        }
-        
         /* Filter Info Tag */
         .filter-tag {
-            display: none;
-            background: #1e293b;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            margin-top: 5px;
-            align-items: center;
-            justify-content: space-between;
-            max-width: fit-content;
+            display: none; background: #1e293b; color: white;
+            padding: 8px 15px; border-radius: 8px; font-size: 0.9rem;
+            margin-top: 10px; align-items: center; justify-content: space-between;
+            max-width: fit-content; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         .filter-tag.show { display: flex; }
-        .filter-close { cursor: pointer; margin-left: 10px; opacity: 0.7; }
+        .filter-close { cursor: pointer; margin-left: 15px; opacity: 0.7; font-weight: bold; }
         .filter-close:hover { opacity: 1; }
 
     </style>
@@ -369,15 +309,15 @@
 <body>
 
 <div class="header">
-    <h1>PharmaTrack Pro v8</h1>
-    <p>Inventory & General Ledger Management System</p>
+    <h1>PharmaTrack Pro v9.0</h1>
+    <p>Enhanced Inventory & General Ledger Management System</p>
 </div>
 
 <div class="container">
     
     <div class="stats-row">
         <div class="stat-card" style="border-top-color: #f59e0b;">
-            <h4>Pending Requests</h4>
+            <h4>Pending Transactions</h4>
             <span id="stat-pending">0</span>
         </div>
         <div class="stat-card" style="border-top-color: var(--primary);">
@@ -390,7 +330,7 @@
         </div>
     </div>
 
-    <h4 style="grid-column: 1/-1; margin-bottom:-15px; margin-top:10px; color:var(--secondary);">Real-time Staff Queue (Click to Filter)</h4>
+    <h4 style="grid-column: 1/-1; margin-bottom:-15px; margin-top:10px; color:var(--secondary); font-weight:600;">Pharmacist Queue (Click to Filter)</h4>
     <div class="staff-queue-row" id="staffQueueContainer">
         </div>
 
@@ -399,19 +339,19 @@
         <form id="mainForm">
             <div class="form-group">
                 <label>SO Number</label>
-                <input type="text" id="soNum" class="form-control" placeholder="SO-0000" required>
+                <input type="text" id="soNum" class="form-control" placeholder="SO-0000" required autocomplete="off">
             </div>
             <div class="form-group">
                 <label>Patient Name</label>
-                <input type="text" id="patName" class="form-control" placeholder="Last Name, First Name" required>
+                <input type="text" id="patName" class="form-control" placeholder="Last Name, First Name" required autocomplete="off">
             </div>
 
-            <div style="margin: 20px 0 10px;">
-                <label style="margin-bottom: 8px;">Prescription Items</label>
+            <div style="margin: 25px 0 15px;">
+                <label style="margin-bottom: 12px; border-bottom:1px solid #e2e8f0; padding-bottom:5px;">Prescription Items</label>
                 <div id="medicineRows">
                     <div class="medicine-entry">
                         <input type="text" placeholder="Item Name" class="form-control med-name" required>
-                        <input type="number" step="0.01" placeholder="Qty" class="form-control med-qty" required>
+                        <input type="number" step="1" placeholder="Qty" class="form-control med-qty" required>
                         <button type="button" class="btn-remove-med" onclick="this.parentElement.remove()" style="visibility:hidden">×</button>
                     </div>
                 </div>
@@ -444,26 +384,26 @@
 
     <div class="right-col">
         <div class="tabs">
-            <button class="tab-btn active" id="btn-pending-tab" onclick="switchTab(event, 'pending-tab')">Queue List</button>
+            <button class="tab-btn active" id="btn-pending-tab" onclick="switchTab(event, 'pending-tab')">Active Queue</button>
             <button class="tab-btn" id="btn-history-tab" onclick="switchTab(event, 'history-tab')">Transaction History</button>
-            <button class="tab-btn" id="btn-staff-tab" onclick="switchTab(event, 'staff-tab')">Staff Performance</button>
+            <button class="tab-btn" id="btn-staff-tab" onclick="switchTab(event, 'staff-tab')">Staff Stats</button>
         </div>
 
         <div id="pending-tab" class="tab-content active">
-            <div style="margin-bottom: 12px;">
-                <input type="text" id="pendingSearch" class="form-control" placeholder="🔍 Search SO, Patient, or Staff Name..." onkeyup="render()" style="background: white; border-color: #cbd5e1;">
-                <div id="activeFilterDisplay" class="filter-tag">
-                    <span id="filterText">Filtering by Staff</span>
-                    <span class="filter-close" onclick="clearStaffFilter()">✕</span>
-                </div>
+            <div style="margin-bottom: 15px; display:flex; gap:10px; flex-wrap:wrap;">
+                <input type="text" id="pendingSearch" class="form-control" placeholder="🔍 Search SO, Patient, or Staff Name..." onkeyup="render()" style="background: white; border-color: #cbd5e1; flex:1;">
+            </div>
+            <div id="activeFilterDisplay" class="filter-tag">
+                <span id="filterText">Filtering by Staff</span>
+                <span class="filter-close" onclick="clearStaffFilter()">✕ Clear Filter</span>
             </div>
 
             <div class="table-wrapper">
                 <table class="main-table">
                     <thead>
                         <tr>
-                            <th class="col-ref">Reference</th>
-                            <th class="col-items" style="padding-left:0">Order Checklist</th>
+                            <th class="col-ref">Reference Details</th>
+                            <th class="col-items" style="padding-left:15px">Order Breakdown & Delivery</th>
                             <th class="col-fin">Financials</th>
                             <th class="col-staff">Staff</th>
                             <th class="col-action">Action</th>
@@ -479,8 +419,8 @@
                 <table class="main-table">
                     <thead>
                         <tr>
-                            <th class="col-ref">Reference</th>
-                            <th class="col-items" style="padding-left:0">Order Details</th>
+                            <th class="col-ref">Reference Details</th>
+                            <th class="col-items" style="padding-left:15px">Order History (Read Only)</th>
                             <th class="col-fin">Financials</th>
                             <th class="col-staff">Staff</th>
                             <th class="col-action">Status</th>
@@ -496,10 +436,10 @@
                 <table class="main-table">
                     <thead>
                         <tr>
-                            <th style="padding-left: 20px;">Pharmacist Name</th>
+                            <th style="padding-left: 25px;">Pharmacist Name</th>
                             <th style="text-align: center;">Transactions</th>
                             <th style="text-align: right;">Total GL</th>
-                            <th style="text-align: right; padding-right:20px;">Total Cash</th>
+                            <th style="text-align: right; padding-right:25px;">Total Cash</th>
                         </tr>
                     </thead>
                     <tbody id="staffBody"></tbody>
@@ -511,26 +451,17 @@
 
 <script>
     // --- JAVASCRIPT LOGIC ---
-    let db = JSON.parse(localStorage.getItem('pharmaDB_v7')) || [];
-    let activeStaffFilter = null; // Stores the currently clicked staff filter
+    // Using v9 key to reset data for new structure
+    let db = JSON.parse(localStorage.getItem('pharmaDB_v9')) || [];
+    let activeStaffFilter = null; 
 
     // --- TAB SWITCHER ---
     function switchTab(evt, tabId) {
-        // Hide all tab contents
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        // Deactivate all buttons
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        
-        // Activate specific tab
         document.getElementById(tabId).classList.add('active');
-        
-        // Handle Button Active State
-        if(evt) {
-            evt.currentTarget.classList.add('active');
-        } else {
-            // Manual switch support
-            document.getElementById('btn-' + tabId).classList.add('active');
-        }
+        if(evt) { evt.currentTarget.classList.add('active'); } 
+        else { document.getElementById('btn-' + tabId).classList.add('active'); }
     }
 
     function addMedRow() {
@@ -539,7 +470,7 @@
         div.className = 'medicine-entry';
         div.innerHTML = `
             <input type="text" placeholder="Item Name" class="form-control med-name" required>
-            <input type="number" step="0.01" placeholder="Qty" class="form-control med-qty" required>
+            <input type="number" step="1" placeholder="Qty" class="form-control med-qty" required>
             <button type="button" class="btn-remove-med" onclick="this.parentElement.remove()">×</button>
         `;
         container.appendChild(div);
@@ -549,10 +480,8 @@
         const total = parseFloat(document.getElementById('totalAmt').value) || 0;
         const gl = parseFloat(document.getElementById('glAmt').value) || 0;
         let diff = total - gl;
-        
         document.getElementById('excessAmt').value = diff.toLocaleString('en-US', {
-            minimumFractionDigits: 2, 
-            maximumFractionDigits: 2
+            minimumFractionDigits: 2, maximumFractionDigits: 2
         });
     }
 
@@ -562,12 +491,17 @@
         
         const meds = [];
         document.querySelectorAll('.medicine-entry').forEach(row => {
-            meds.push({
-                name: row.querySelector('.med-name').value,
-                qty: row.querySelector('.med-qty').value,
-                checked: false,
-                doNumber: null
-            });
+            const q = parseInt(row.querySelector('.med-qty').value) || 0;
+            const n = row.querySelector('.med-name').value;
+            if(n && q > 0) {
+                meds.push({
+                    name: n,
+                    qty: q,
+                    fulfilled: 0, 
+                    checked: false,
+                    doNumber: '' 
+                });
+            }
         });
 
         const total = parseFloat(document.getElementById('totalAmt').value) || 0;
@@ -584,7 +518,7 @@
             excess: excess,
             staff: document.getElementById('staffName').value,
             status: 'Pending',
-            date: new Date().toLocaleString()
+            date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
         };
 
         db.unshift(entry);
@@ -595,52 +529,80 @@
         document.getElementById('medicineRows').innerHTML = `
             <div class="medicine-entry">
                 <input type="text" placeholder="Item Name" class="form-control med-name" required>
-                <input type="number" step="0.01" placeholder="Qty" class="form-control med-qty" required>
+                <input type="number" step="1" placeholder="Qty" class="form-control med-qty" required>
                 <button type="button" class="btn-remove-med" onclick="this.parentElement.remove()" style="visibility:hidden">×</button>
             </div>`;
     });
 
     function saveAndRender() {
-        localStorage.setItem('pharmaDB_v7', JSON.stringify(db));
+        localStorage.setItem('pharmaDB_v9', JSON.stringify(db));
         render();
     }
 
-    // --- CHECKBOX LOGIC (WITH DO POPUP) ---
-    window.toggleItemCheck = (id, medIndex) => {
+    // --- LOGIC: CHECKING & BALANCING ---
+    window.handleCheck = (event, id, medIndex) => {
+        event.preventDefault(); // Control manually
+
         const idx = db.findIndex(i => i.id === id);
-        if (idx > -1) {
-            const item = db[idx].medicines[medIndex];
-            
-            if (!item.checked) {
-                let doInput = prompt("Enter D.O. Number (Delivery Order) as proof of stock arrival:");
-                
-                if (doInput != null && doInput.trim() !== "") {
-                    item.checked = true;
-                    item.doNumber = doInput.trim();
-                    saveAndRender();
-                } else {
-                    render(); // Reset visual check
-                }
-            } else {
+        if (idx === -1) return;
+
+        const item = db[idx].medicines[medIndex];
+        
+        // Reset Logic
+        if (item.checked) {
+            if(confirm("Mark this item as incomplete/reset?")) {
                 item.checked = false;
-                item.doNumber = null;
-                saveAndRender(); 
+                item.fulfilled = 0;
+                item.doNumber = '';
+                saveAndRender();
             }
+            return;
         }
+
+        // Logic Loop
+        let doInput = prompt("Enter D.O. Number (Delivery Order):", item.doNumber);
+        if (doInput == null || doInput.trim() === "") return; 
+
+        let currentFulfilled = item.fulfilled || 0;
+        let requiredQty = item.qty;
+        let missing = requiredQty - currentFulfilled;
+
+        let qtyInput = prompt(`Item: ${item.name}\nRequired Total: ${requiredQty}\nAlready Received: ${currentFulfilled}\n\nBalance Needed: ${missing}\n\nEnter Quantity Received NOW:`, missing);
+        
+        let qtyReceived = parseInt(qtyInput);
+        if (isNaN(qtyReceived) || qtyReceived <= 0) {
+            alert("Invalid quantity.");
+            return;
+        }
+
+        item.fulfilled = currentFulfilled + qtyReceived;
+        item.doNumber = doInput.trim(); 
+
+        if (item.fulfilled >= item.qty) {
+            item.checked = true; 
+            item.fulfilled = item.qty; 
+        } else {
+            alert(`Partial Receive Recorded.\nBalance Remaining: ${item.qty - item.fulfilled}`);
+        }
+
+        saveAndRender();
     };
 
-    // --- COMPLETE TRANSACTION ---
     window.complete = (id) => {
         const idx = db.findIndex(i => i.id === id);
         if (idx > -1) {
-            if(confirm("Complete this transaction?")) {
-                db[idx].status = 'Completed';
-                saveAndRender();
+            // Check if all items are fully served
+            const incomplete = db[idx].medicines.some(m => !m.checked);
+            if(incomplete) {
+                if(!confirm("Warning: Some items are not fully dispensed. Complete anyway?")) return;
+            } else {
+                if(!confirm("Complete this transaction?")) return;
             }
+            db[idx].status = 'Completed';
+            saveAndRender();
         }
     };
 
-    // --- DELETE FUNCTION ---
     window.deleteTransaction = (id) => {
         if(confirm("Are you sure you want to delete this transaction? This cannot be undone.")) {
             const idx = db.findIndex(i => i.id === id);
@@ -651,14 +613,12 @@
         }
     };
 
-    // --- QUEUE FILTERING LOGIC ---
+    // --- QUEUE FILTERING ---
     window.filterByStaff = (staffKey) => {
-        // Toggle: If clicking the same one, clear filter. If new, set filter.
         if (activeStaffFilter === staffKey) {
             activeStaffFilter = null;
         } else {
             activeStaffFilter = staffKey;
-            // Auto switch to pending tab to see results
             switchTab(null, 'pending-tab');
         }
         render();
@@ -669,7 +629,7 @@
         render();
     }
 
-    // --- RENDER MAIN FUNCTION ---
+    // --- MAIN RENDER ---
     function render() {
         const pendingBody = document.getElementById('pendingBody');
         const historyBody = document.getElementById('historyBody');
@@ -678,14 +638,10 @@
         const filterTag = document.getElementById('activeFilterDisplay');
         const filterText = document.getElementById('filterText');
         
-        // GET TEXT SEARCH VALUE
         const textSearchVal = document.getElementById('pendingSearch') ? document.getElementById('pendingSearch').value.toLowerCase() : "";
 
-        // UI: Show/Hide Filter Tag
         if (activeStaffFilter) {
             filterTag.classList.add('show');
-            // Find display name for the tag
-            const name = activeStaffFilter; // In a real app we'd map key back to display name
             filterText.textContent = `Filtering for: ${activeStaffFilter}`;
         } else {
             filterTag.classList.remove('show');
@@ -696,170 +652,160 @@
         queueContainer.innerHTML = '';
         
         let totalGL = 0; let totalExcess = 0; let pendingCount = 0;
-        const staffMap = {}; // For overall stats
-        const pendingByStaff = {}; // For Top Queue Display
+        const staffMap = {}; 
+        const pendingByStaff = {}; 
 
         db.forEach(item => {
-            // --- STATS ACCUMULATION ---
+            // --- Aggregation Logic ---
             if(item.status === 'Pending') {
                 pendingCount++;
-                
-                // Grouping Logic for Queue
                 const rawName = item.staff || "Unknown";
-                const staffKey = rawName.toUpperCase().trim(); // Use Uppercase as Key
-
+                const staffKey = rawName.toUpperCase().trim();
                 if (!pendingByStaff[staffKey]) {
-                    pendingByStaff[staffKey] = {
-                        displayName: rawName, 
-                        count: 0
-                    };
+                    pendingByStaff[staffKey] = { displayName: rawName, count: 0 };
                 }
                 pendingByStaff[staffKey].count++;
             }
             
             totalGL += Number(item.gl);
             totalExcess += Number(item.excess);
-
-            // Grouping for Performance Table
             const staffKeyPerf = (item.staff || "Unknown").trim().toUpperCase();
             if(!staffMap[staffKeyPerf]) {
-                staffMap[staffKeyPerf] = { 
-                    displayName: item.staff, 
-                    count: 0, 
-                    gl: 0, 
-                    excess: 0 
-                };
+                staffMap[staffKeyPerf] = { displayName: item.staff, count: 0, gl: 0, excess: 0 };
             }
             staffMap[staffKeyPerf].count++;
             staffMap[staffKeyPerf].gl += Number(item.gl);
             staffMap[staffKeyPerf].excess += Number(item.excess);
 
-            // --- BUILD ROW HTML ---
-            let allItemsChecked = true;
+            // --- Search Filter ---
+            let matchesSearch = (
+                item.so.toLowerCase().includes(textSearchVal) || 
+                item.patient.toLowerCase().includes(textSearchVal) ||
+                item.staff.toLowerCase().includes(textSearchVal)
+            );
+            if(activeStaffFilter && item.staff.toUpperCase().trim() !== activeStaffFilter) matchesSearch = false;
+            
+            if (!matchesSearch) return;
 
-            let medRows = item.medicines.map((m, index) => {
+            // --- Build Medicine Table HTML ---
+            // This is used for both Pending and History to ensure consistent wide view
+            const medRowsHtml = item.medicines.map((m, index) => {
                 const isChecked = m.checked === true;
-                if (!isChecked) allItemsChecked = false; 
-
+                const balance = m.qty - (m.fulfilled || 0);
+                const balanceClass = balance > 0 ? 'balance-alert' : 'balance-ok';
+                const doDisplay = m.doNumber ? `<span class="do-badge-pill">${m.doNumber}</span>` : `<span class="do-empty">-- No D.O --</span>`;
+                
+                // Pending View Input
                 const checkboxHtml = item.status === 'Pending' 
-                    ? `<input type="checkbox" class="med-check" ${isChecked ? 'checked' : ''} onclick="toggleItemCheck(${item.id}, ${index})">` 
-                    : `<span style="color:#10b981; margin-right:5px;">✓</span>`; 
-
-                const textClass = isChecked ? 'item-done' : '';
-                const doBadge = m.doNumber ? `<span class="do-tag">DO: ${m.doNumber}</span>` : '';
+                    ? `<input type="checkbox" class="med-check" ${isChecked ? 'checked' : ''} onclick="handleCheck(event, ${item.id}, ${index})">` 
+                    : (isChecked ? `<span style="color:#10b981; font-weight:bold;">✓</span>` : `<span style="color:#ef4444;">✕</span>`); 
 
                 return `
                     <tr>
-                        <td class="${textClass}">
-                            ${checkboxHtml} ${m.name} ${doBadge}
+                        <td class="in-check" style="text-align:center">${checkboxHtml}</td>
+                        <td class="in-item">
+                            <div style="font-weight:600;">${m.name}</div>
                         </td>
-                        <td style="text-align:right"><span class="item-qty">${m.qty}</span></td>
+                        <td class="in-qty">
+                            <span style="background:#f1f5f9; padding:2px 8px; border-radius:4px;">${m.qty}</span>
+                        </td>
+                        <td class="in-qty" style="color:var(--primary); font-weight:600;">
+                            ${m.fulfilled || 0}
+                        </td>
+                         <td class="in-qty">
+                            <span class="${balanceClass}">${balance}</span>
+                        </td>
+                        <td class="in-do" style="text-align:center;">${doDisplay}</td>
                     </tr>
                 `;
             }).join('');
 
-            const innerTable = `
-                <table class="inner-table">
-                    <thead><tr><th style="text-align:left">DESCRIPTION</th><th style="text-align:right">QTY</th></tr></thead>
-                    <tbody>${medRows}</tbody>
-                </table>
-            `;
-            
-            const formatMoney = (amount) => parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-            let actionHtml = '';
-            if (item.status === 'Pending') {
-                if (allItemsChecked) {
-                    actionHtml = `<button onclick="complete(${item.id})" class="btn-complete">✓ Complete</button>`;
-                } else {
-                    actionHtml = `<button class="btn-complete btn-disabled" disabled>Complete</button><div style="font-size:0.7rem; color:#e11d48; margin-top:4px;">Check Items!</div>`;
-                }
-            } else {
-                actionHtml = `<span class="badge-done">Paid & Done</span>`;
-            }
-            actionHtml += `<button onclick="deleteTransaction(${item.id})" class="btn-delete">🗑 Delete</button>`;
-
             const rowHtml = `
                 <tr>
-                    <td class="col-ref">
+                    <td>
                         <span class="so-badge">${item.so}</span>
-                        <div class="pat-name">${item.patient}</div>
-                        <div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">${item.date.split(',')[0]}</div>
+                        <span class="pat-name">${item.patient}</span>
+                        <div class="date-meta">${item.date}</div>
                     </td>
-                    <td class="col-items cell-breakdown">${innerTable}</td>
-                    <td class="col-fin">
-                        <div class="fin-gl">GL: ₱${formatMoney(item.gl)}</div>
-                        <div class="fin-total">₱${formatMoney(item.excess)}</div>
+                    <td class="cell-breakdown">
+                        <table class="inner-table">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Item Name</th>
+                                    <th>Ord</th>
+                                    <th>Gvn</th>
+                                    <th>Bal</th>
+                                    <th>D.O. Reference</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${medRowsHtml}
+                            </tbody>
+                        </table>
                     </td>
-                    <td class="col-staff"><div style="font-weight:500; color:#475569;">${item.staff}</div></td>
-                    <td class="col-action">${actionHtml}</td>
+                    <td style="text-align:right;">
+                        <span class="fin-gl">GL: ₱ ${Number(item.gl).toLocaleString('en-US', {minimumFractionDigits:2})}</span>
+                        <span class="fin-total">Excess: ₱ ${Number(item.excess).toLocaleString('en-US', {minimumFractionDigits:2})}</span>
+                        <div style="font-size:0.8rem; margin-top:5px; color:#94a3b8;">Tot: ₱ ${Number(item.total).toLocaleString('en-US')}</div>
+                    </td>
+                    <td style="text-align:center;">
+                        <div style="font-weight:600; color:var(--text-main);">${item.staff}</div>
+                    </td>
+                    <td style="text-align:center;">
+                        ${item.status === 'Pending' 
+                            ? `<button class="btn-complete" onclick="complete(${item.id})">Complete</button>
+                               <button class="btn-delete" onclick="deleteTransaction(${item.id})">Delete</button>` 
+                            : `<span style="color:var(--success); font-weight:bold; background:#ecfdf5; padding:5px 10px; border-radius:6px; display:block;">Completed</span>
+                               <button class="btn-delete" onclick="deleteTransaction(${item.id})" style="margin-top:5px;">Remove</button>`
+                        }
+                    </td>
                 </tr>
             `;
 
-            // --- FILTERING LOGIC (Applied to Pending Only) ---
             if(item.status === 'Pending') {
-                // 1. Text Search Filter (SO, Patient, OR STAFF)
-                const searchStr = (item.so + " " + item.patient + " " + item.staff).toLowerCase();
-                const matchesText = searchStr.includes(textSearchVal);
-                
-                // 2. Queue Click Filter
-                let matchesQueue = true;
-                if (activeStaffFilter) {
-                    matchesQueue = (item.staff.trim().toUpperCase() === activeStaffFilter);
-                }
-
-                // Show only if BOTH match
-                if (matchesText && matchesQueue) {
-                    pendingBody.innerHTML += rowHtml;
-                }
-            }
-            else {
+                pendingBody.innerHTML += rowHtml;
+            } else {
                 historyBody.innerHTML += rowHtml;
             }
         });
 
-        // --- RENDER TOP STAFF QUEUE ---
-        if (Object.keys(pendingByStaff).length === 0) {
-            queueContainer.innerHTML = '<div style="color:#94a3b8; font-style:italic; padding-left:5px;">No pending items in queue.</div>';
-        } else {
-            for (let key in pendingByStaff) {
-                const staffData = pendingByStaff[key];
-                
-                // Check if this card is currently active (clicked)
-                const isActiveClass = (activeStaffFilter === key) ? 'active-filter' : '';
+        // --- Render Staff Cards ---
+        Object.keys(pendingByStaff).forEach(key => {
+            const s = pendingByStaff[key];
+            const div = document.createElement('div');
+            div.className = `staff-queue-card ${activeStaffFilter === key ? 'active-filter' : ''}`;
+            div.onclick = () => filterByStaff(key);
+            div.innerHTML = `
+                <span class="staff-q-name">${s.displayName}</span>
+                <span class="staff-q-count">${s.count} Pend</span>
+            `;
+            queueContainer.appendChild(div);
+        });
 
-                queueContainer.innerHTML += `
-                    <div class="staff-queue-card ${isActiveClass}" onclick="filterByStaff('${key}')">
-                        <span class="staff-q-name">👤 ${staffData.displayName}</span>
-                        <span class="staff-q-count">${staffData.count} Pending</span>
-                    </div>
-                `;
-            }
-        }
+        // --- Render Stats ---
+        document.getElementById('stat-pending').textContent = pendingCount;
+        document.getElementById('stat-gl').textContent = '₱ ' + totalGL.toLocaleString('en-US', {minimumFractionDigits: 2});
+        document.getElementById('stat-excess').textContent = '₱ ' + totalExcess.toLocaleString('en-US', {minimumFractionDigits: 2});
 
-        // --- UPDATE STATS HEADER ---
-        document.getElementById('stat-pending').innerText = pendingCount;
-        document.getElementById('stat-gl').innerText = "₱ " + totalGL.toLocaleString('en-US', {minimumFractionDigits:2});
-        document.getElementById('stat-excess').innerText = "₱ " + totalExcess.toLocaleString('en-US', {minimumFractionDigits:2});
-
-        // --- RENDER PERFORMANCE TABLE ---
+        // --- Render Staff Perf Table ---
         staffBody.innerHTML = '';
-        for(let key in staffMap) {
+        Object.keys(staffMap).forEach(key => {
             const s = staffMap[key];
             staffBody.innerHTML += `
                 <tr>
-                    <td style="font-weight:600; padding-left:20px;">${s.displayName}</td>
+                    <td style="padding-left:25px; font-weight:600;">${s.displayName}</td>
                     <td style="text-align:center;">${s.count}</td>
-                    <td style="text-align:right;">₱${s.gl.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
-                    <td style="text-align:right; padding-right:20px;">₱${s.excess.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                    <td style="text-align:right;">₱ ${s.gl.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                    <td style="text-align:right; padding-right:25px; font-weight:700; color:var(--success);">₱ ${s.excess.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
                 </tr>
             `;
-        }
+        });
     }
 
-    // Initial Render
+    // Initialize
     render();
-
 </script>
+
 </body>
 </html>
