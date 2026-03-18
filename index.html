@@ -57,6 +57,30 @@
             font-size: 0.9rem;
             margin-top: 4px;
         }
+        .header-controls {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        .btn-summary {
+            background: var(--warning);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: 0.2s ease;
+            font-size: 0.9rem;
+        }
+        .btn-summary:hover {
+            transform: translateY(-2px);
+            background: #d97706;
+            box-shadow: 0 6px 12px rgba(245, 158, 11, 0.4);
+        }
         /* GRID LAYOUT */
         .container {
             width: 95%;
@@ -74,7 +98,10 @@
             .header {
                 flex-direction: column;
                 text-align: center;
-                gap: 10px;
+                gap: 15px;
+            }
+            .header-controls {
+                align-items: center;
             }
         }
         /* STATS CARDS */
@@ -534,25 +561,12 @@
         table.inner-table tr:last-child td {
             border-bottom: none;
         }
-        /* Inner Columns - UPDATED FOR REQ/GAVE/BAL */
-        .in-check {
-            width: 30px;
-            text-align: center;
-        }
-        .in-item {
-            width: 30%;
-            word-break: break-word;
-        }
-        .in-req, .in-gave, .in-bal {
-            width: 10%;
-            text-align: center;
-            white-space: nowrap;
-        }
-        .in-do {
-            width: 10%;
-            text-align: right;
-            white-space: nowrap;
-        }
+        /* Inner Columns */
+        .in-check { width: 30px; text-align: center; }
+        .in-item { width: 30%; word-break: break-word; }
+        .in-req, .in-gave, .in-bal { width: 10%; text-align: center; white-space: nowrap; }
+        .in-do { width: 10%; text-align: right; white-space: nowrap; }
+        
         /* Logic Badges */
         .balance-alert {
             color: #dc2626;
@@ -677,8 +691,70 @@
             user-select: none;
             transition: opacity 0.2s ease;
         }
-        .filter-close:hover {
-            opacity: 1;
+        .filter-close:hover { opacity: 1; }
+
+        /* --- NEW MODAL STYLES --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+        .modal-container {
+            background: white;
+            width: 90%;
+            max-width: 650px;
+            border-radius: var(--radius);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
+            animation: modalPop 0.3s ease-out;
+        }
+        @keyframes modalPop {
+            0% { transform: scale(0.95); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .modal-header {
+            padding: 20px 25px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 { font-size: 1.2rem; font-weight: 700; margin: 0;}
+        .modal-body {
+            padding: 0;
+            overflow-y: auto;
+            background: var(--bg-body);
+        }
+        .modal-close-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .modal-close-btn:hover { background: rgba(255,255,255,0.4); }
+        .summary-table { width: 100%; border-collapse: collapse; background: white;}
+        .summary-table th, .summary-table td { padding: 15px 25px; border-bottom: 1px solid var(--border); text-align: left; }
+        .summary-table th { background: #f8fafc; font-weight: 700; color: var(--secondary); text-transform: uppercase; font-size: 0.8rem; position: sticky; top: 0;}
+        .summary-table tr:hover { background: #fcfcfc; }
+        .modal-footer {
+            padding: 15px 25px;
+            background: white;
+            border-top: 1px solid var(--border);
+            text-align: right;
         }
     </style>
 </head>
@@ -688,8 +764,9 @@
             <h1>PharmaTrack Pro v9.1</h1>
             <p>Stock Balancing & General Ledger Management System</p>
         </div>
-        <div style="text-align: right; opacity: 0.8; font-size: 0.85rem;">
-            <span id="dateTimeDisplay">--/--/----</span>
+        <div class="header-controls">
+            <span id="dateTimeDisplay" style="opacity: 0.8; font-size: 0.85rem; margin-bottom: 5px;">--/--/----</span>
+            <button class="btn-summary" onclick="openSummaryModal()">📊 View Pending Stock Summary</button>
         </div>
     </div>
 
@@ -842,6 +919,30 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="summaryModal" onclick="closeModalOutside(event)">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>📦 Auto-Balance Summary</h2>
+                <button class="modal-close-btn" onclick="closeSummaryModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Medicine / Item Name</th>
+                            <th style="text-align: right;">Total Pending Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summaryBody">
+                        </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-submit" style="width: auto; padding: 8px 20px; font-size: 0.9rem;" onclick="closeSummaryModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
 <script>
     // --- JAVASCRIPT LOGIC ---
     let db = JSON.parse(localStorage.getItem('pharmaDB_v9')) || [];
@@ -939,6 +1040,10 @@
     function saveAndRender() {
         localStorage.setItem('pharmaDB_v9', JSON.stringify(db));
         render();
+        // Update summary if modal is currently open
+        if(document.getElementById('summaryModal').style.display === 'flex') {
+            renderSummaryModal();
+        }
     }
 
     // --- LOGIC: CHECKING & BALANCING ---
@@ -1029,6 +1134,68 @@
         activeStaffFilter = null;
         render();
     }
+
+    // --- NEW MODAL LOGIC (AUTO-BALANCE SUMMARY) ---
+    window.openSummaryModal = () => {
+        document.getElementById('summaryModal').style.display = 'flex';
+        renderSummaryModal();
+    };
+
+    window.closeSummaryModal = () => {
+        document.getElementById('summaryModal').style.display = 'none';
+    };
+
+    window.closeModalOutside = (e) => {
+        if(e.target === document.getElementById('summaryModal')) {
+            closeSummaryModal();
+        }
+    };
+
+    window.renderSummaryModal = () => {
+        const summaryBody = document.getElementById('summaryBody');
+        summaryBody.innerHTML = '';
+        
+        let groupedItems = {};
+
+        // Loop through pending transactions to calculate live balance
+        db.forEach(tx => {
+            if(tx.status === 'Pending') {
+                tx.medicines.forEach(m => {
+                    let balance = m.qty - (m.fulfilled || 0);
+                    if(balance > 0) {
+                        // Normalize the name to group similar items correctly
+                        let normalizedKey = m.name.trim().toUpperCase();
+                        
+                        if(!groupedItems[normalizedKey]) {
+                            groupedItems[normalizedKey] = {
+                                displayName: m.name.trim(), // Keep original format for display
+                                totalBalance: 0
+                            };
+                        }
+                        groupedItems[normalizedKey].totalBalance += balance;
+                    }
+                });
+            }
+        });
+
+        // Convert object map to array and sort by highest balance
+        let sortedArray = Object.values(groupedItems).sort((a, b) => b.totalBalance - a.totalBalance);
+
+        if(sortedArray.length === 0) {
+            summaryBody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: var(--secondary); font-style: italic;">No pending items or balances found.</td></tr>`;
+            return;
+        }
+
+        // Render to modal table
+        sortedArray.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight: 600; font-size: 0.95rem; color: var(--primary-dark);">${item.displayName}</td>
+                <td style="text-align: right;"><span class="balance-alert" style="font-size: 1.1rem; padding: 4px 10px;">${item.totalBalance}</span></td>
+            `;
+            summaryBody.appendChild(tr);
+        });
+    };
 
     // --- MAIN RENDER ---
     function render() {
