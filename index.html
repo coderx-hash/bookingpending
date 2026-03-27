@@ -275,8 +275,25 @@
         .medicine-entry input.med-name {
             flex: 2;
         }
+        .medicine-entry select.med-unit {
+            flex: 1.2; /* Tinaasan from 0.8 para lumuwag */
+            min-width: 85px; /* Para hindi masyadong lumiit */
+            padding: 10px 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background: #fff;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .medicine-entry select.med-unit:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
         .medicine-entry input.med-qty {
-            flex: 0.7;
+            flex: 1; /* Tinaasan from 0.7 para sa quantity */
+            min-width: 80px;
             text-align: center;
         }
         .btn-remove-med {
@@ -564,7 +581,7 @@
         /* Inner Columns */
         .in-check { width: 30px; text-align: center; }
         .in-item { width: 30%; word-break: break-word; }
-        .in-req, .in-gave, .in-bal { width: 10%; text-align: center; white-space: nowrap; }
+        .in-req, .in-gave, .in-bal { width: 12%; text-align: center; white-space: nowrap; }
         .in-do { width: 10%; text-align: right; white-space: nowrap; }
         
         /* Logic Badges */
@@ -809,6 +826,14 @@
                     <div id="medicineRows">
                         <div class="medicine-entry">
                             <input type="text" placeholder="Item Name" class="form-control med-name" required />
+                            <select class="form-control med-unit" required>
+                                <option value="" disabled selected>Unit</option>
+                                <option value="vial">vial</option>
+                                <option value="box">box</option>
+                                <option value="tab">tab</option>
+                                <option value="cap">cap</option>
+                                <option value="pfs">pfs</option>
+                            </select>
                             <input type="number" step="1" placeholder="Qty" class="form-control med-qty" required />
                             <button type="button" class="btn-remove-med" onclick="this.parentElement.remove()" style="visibility:hidden">×</button>
                         </div>
@@ -972,6 +997,14 @@
         div.className = 'medicine-entry';
         div.innerHTML = `
             <input type="text" placeholder="Item Name" class="form-control med-name" required />
+            <select class="form-control med-unit" required>
+                <option value="" disabled selected>Unit</option>
+                <option value="vial">vial</option>
+                <option value="box">box</option>
+                <option value="tab">tab</option>
+                <option value="cap">cap</option>
+                <option value="pfs">pfs</option>
+            </select>
             <input type="number" step="1" placeholder="Qty" class="form-control med-qty" required />
             <button type="button" class="btn-remove-med" onclick="this.parentElement.remove()">×</button>
         `;
@@ -996,9 +1029,12 @@
         document.querySelectorAll('.medicine-entry').forEach(row => {
             const q = parseInt(row.querySelector('.med-qty').value) || 0;
             const n = row.querySelector('.med-name').value;
-            if (n && q > 0) {
+            const u = row.querySelector('.med-unit').value || '';
+            
+            if (n && q > 0 && u) {
                 meds.push({
                     name: n,
+                    unit: u,
                     qty: q,
                     fulfilled: 0,
                     checked: false,
@@ -1032,6 +1068,14 @@
         document.getElementById('medicineRows').innerHTML = `
             <div class="medicine-entry">
                 <input type="text" placeholder="Item Name" class="form-control med-name" required />
+                <select class="form-control med-unit" required>
+                    <option value="" disabled selected>Unit</option>
+                    <option value="vial">vial</option>
+                    <option value="box">box</option>
+                    <option value="tab">tab</option>
+                    <option value="cap">cap</option>
+                    <option value="pfs">pfs</option>
+                </select>
                 <input type="number" step="1" placeholder="Qty" class="form-control med-qty" required />
                 <button type="button" class="btn-remove-med" onclick="this.parentElement.remove()" style="visibility:hidden">×</button>
             </div>`;
@@ -1054,6 +1098,7 @@
         if (idx === -1) return;
 
         const item = db[idx].medicines[medIndex];
+        const unitLabel = item.unit ? ` ${item.unit}` : '';
 
         // Reset Logic
         if (item.checked) {
@@ -1074,7 +1119,7 @@
         let requiredQty = item.qty;
         let missing = requiredQty - currentFulfilled;
 
-        let qtyInput = prompt(`Item: ${item.name}\nRequired Total: ${requiredQty}\nAlready Received: ${currentFulfilled}\n\nBalance Needed: ${missing}\n\nEnter Quantity Received NOW:`, missing);
+        let qtyInput = prompt(`Item: ${item.name}\nRequired Total: ${requiredQty}${unitLabel}\nAlready Received: ${currentFulfilled}${unitLabel}\n\nBalance Needed: ${missing}${unitLabel}\n\nEnter Quantity Received NOW:`, missing);
 
         let qtyReceived = parseInt(qtyInput);
         if (isNaN(qtyReceived) || qtyReceived <= 0) {
@@ -1089,7 +1134,7 @@
             item.checked = true;
             item.fulfilled = item.qty;
         } else {
-            alert(`Partial Receive Recorded.\nBalance Remaining: ${item.qty - item.fulfilled}`);
+            alert(`Partial Receive Recorded.\nBalance Remaining: ${item.qty - item.fulfilled}${unitLabel}`);
         }
 
         saveAndRender();
@@ -1169,7 +1214,8 @@
                         if(!groupedItems[normalizedKey]) {
                             groupedItems[normalizedKey] = {
                                 displayName: m.name.trim(), // Keep original format for display
-                                totalBalance: 0
+                                totalBalance: 0,
+                                unit: m.unit || '' // Include unit in summary
                             };
                         }
                         groupedItems[normalizedKey].totalBalance += balance;
@@ -1188,10 +1234,11 @@
 
         // Render to modal table
         sortedArray.forEach(item => {
+            const unitLabel = item.unit ? ` <span style="font-size: 0.8rem; color: #64748b;">${item.unit}</span>` : '';
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="font-weight: 600; font-size: 0.95rem; color: var(--primary-dark);">${item.displayName}</td>
-                <td style="text-align: right;"><span class="balance-alert" style="font-size: 1.1rem; padding: 4px 10px;">${item.totalBalance}</span></td>
+                <td style="text-align: right;"><span class="balance-alert" style="font-size: 1.1rem; padding: 4px 10px;">${item.totalBalance}${unitLabel}</span></td>
             `;
             summaryBody.appendChild(tr);
         });
@@ -1257,12 +1304,13 @@
 
             if (!matchesSearch) return;
 
-            // --- Build Medicine Table HTML (UPDATED FOR REQ/GAVE/BAL) ---
+            // --- Build Medicine Table HTML (UPDATED FOR REQ/GAVE/BAL & UNIT) ---
             const medRowsHtml = item.medicines.map((m, index) => {
                 const isChecked = m.checked === true;
                 const balance = m.qty - (m.fulfilled || 0);
                 const balanceClass = balance > 0 ? 'balance-alert' : 'balance-ok';
                 const doDisplay = m.doNumber ? `<span class="do-badge-pill">${m.doNumber}</span>` : `<span class="do-empty">--</span>`;
+                const unitDisplay = m.unit ? ` <span style="font-size:0.75rem; color:#64748b;">${m.unit}</span>` : '';
 
                 // Logic: Only clickable if pending
                 const checkStatus = item.status === 'Pending'
@@ -1273,9 +1321,9 @@
                     <tr>
                         <td class="in-check">${checkStatus}</td>
                         <td class="in-item" title="${m.name}">${m.name}</td>
-                        <td class="in-req">${m.qty}</td>
-                        <td class="in-gave">${m.fulfilled || 0}</td>
-                        <td class="in-bal"><span class="${balanceClass}">${balance}</span></td>
+                        <td class="in-req">${m.qty}${unitDisplay}</td>
+                        <td class="in-gave">${m.fulfilled || 0}${unitDisplay}</td>
+                        <td class="in-bal"><span class="${balanceClass}">${balance}${unitDisplay}</span></td>
                         <td class="in-do">${doDisplay}</td>
                     </tr>
                 `;
