@@ -724,7 +724,7 @@
         .modal-container {
             background: white;
             width: 90%;
-            max-width: 650px;
+            max-width: 700px;
             border-radius: var(--radius);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             overflow: hidden;
@@ -763,6 +763,40 @@
             transition: 0.2s;
         }
         .modal-close-btn:hover { background: rgba(255,255,255,0.4); }
+        
+        /* Modal Toggle Buttons */
+        .view-toggle-container {
+            display: flex;
+            background: #f8fafc;
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--border);
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .modal-toggle-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border);
+            background: white;
+            color: var(--secondary);
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            min-width: 150px;
+            text-align: center;
+        }
+        .modal-toggle-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        }
+        .modal-toggle-btn:hover:not(.active) {
+            background: #e2e8f0;
+        }
+
         .summary-table { width: 100%; border-collapse: collapse; background: white;}
         .summary-table th, .summary-table td { padding: 15px 25px; border-bottom: 1px solid var(--border); text-align: left; }
         .summary-table th { background: #f8fafc; font-weight: 700; color: var(--secondary); text-transform: uppercase; font-size: 0.8rem; position: sticky; top: 0; z-index: 5;}
@@ -993,16 +1027,50 @@
                 <button class="modal-close-btn" onclick="closeSummaryModal()">✕</button>
             </div>
             <div class="modal-body">
-                <table class="summary-table">
-                    <thead>
-                        <tr>
-                            <th>Medicine / Item Name (Click to view Staff)</th>
-                            <th style="text-align: right;">Total Pending Balance</th>
-                        </tr>
-                    </thead>
-                    <tbody id="summaryBody">
-                        </tbody>
-                </table>
+                
+                <div class="view-toggle-container">
+                    <button class="modal-toggle-btn active" id="btnToggleMed" onclick="switchModalView('med')">📦 By Medicine</button>
+                    <button class="modal-toggle-btn" id="btnToggleStaff" onclick="switchModalView('staff')">👩‍⚕️ By Pharmacist</button>
+                    <button class="modal-toggle-btn" id="btnToggleFlat" onclick="switchModalView('flat')">📋 Quick View (Flat List)</button>
+                </div>
+
+                <div id="modalViewMedicine">
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>Medicine / Item Name (Click to view Staff)</th>
+                                <th style="text-align: right;">Total Pending Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryBodyMed"></tbody>
+                    </table>
+                </div>
+
+                <div id="modalViewStaff" style="display: none;">
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>Pharmacist Name (Click to view Missing Items)</th>
+                                <th style="text-align: right;">Total Items Pending</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryBodyStaff"></tbody>
+                    </table>
+                </div>
+
+                <div id="modalViewFlat" style="display: none;">
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>Pharmacist Name</th>
+                                <th>Medicine / Item</th>
+                                <th style="text-align: right;">Pending Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryBodyFlat"></tbody>
+                    </table>
+                </div>
+
             </div>
             <div class="modal-footer">
                 <button class="btn-submit" style="width: auto; padding: 8px 20px; font-size: 0.9rem;" onclick="closeSummaryModal()">Close</button>
@@ -1014,6 +1082,7 @@
     // --- JAVASCRIPT LOGIC ---
     let db = JSON.parse(localStorage.getItem('pharmaDB_v9')) || [];
     let activeStaffFilter = null;
+    let activeModalView = 'med'; // 'med', 'staff', or 'flat'
 
     // Date Time Display
     setInterval(() => {
@@ -1222,7 +1291,7 @@
         render();
     }
 
-    // --- NEW MODAL LOGIC (AUTO-BALANCE SUMMARY WITH STAFF BREAKDOWN) ---
+    // --- MODAL LOGIC (TRIPLE VIEWS) ---
     window.openSummaryModal = () => {
         document.getElementById('summaryModal').style.display = 'flex';
         renderSummaryModal();
@@ -1238,9 +1307,23 @@
         }
     };
 
-    // Function to toggle the staff breakdown rows
-    window.toggleBreakdown = (index, rowElement) => {
-        const detailRow = document.getElementById(`breakdown-${index}`);
+    window.switchModalView = (view) => {
+        activeModalView = view;
+        
+        // Buttons
+        document.getElementById('btnToggleMed').classList.toggle('active', view === 'med');
+        document.getElementById('btnToggleStaff').classList.toggle('active', view === 'staff');
+        document.getElementById('btnToggleFlat').classList.toggle('active', view === 'flat');
+        
+        // Containers
+        document.getElementById('modalViewMedicine').style.display = view === 'med' ? 'block' : 'none';
+        document.getElementById('modalViewStaff').style.display = view === 'staff' ? 'block' : 'none';
+        document.getElementById('modalViewFlat').style.display = view === 'flat' ? 'block' : 'none';
+    };
+
+    // Function to toggle the breakdown rows inside collapsible tables
+    window.toggleBreakdown = (rowId, rowElement) => {
+        const detailRow = document.getElementById(rowId);
         if(detailRow.classList.contains('show')) {
             detailRow.classList.remove('show');
             rowElement.classList.remove('open');
@@ -1251,57 +1334,96 @@
     };
 
     window.renderSummaryModal = () => {
-        const summaryBody = document.getElementById('summaryBody');
-        summaryBody.innerHTML = '';
+        const summaryBodyMed = document.getElementById('summaryBodyMed');
+        const summaryBodyStaff = document.getElementById('summaryBodyStaff');
+        const summaryBodyFlat = document.getElementById('summaryBodyFlat');
+        
+        summaryBodyMed.innerHTML = '';
+        summaryBodyStaff.innerHTML = '';
+        summaryBodyFlat.innerHTML = '';
         
         let groupedItems = {};
+        let groupedStaff = {};
+        let flatList = [];
 
-        // Loop through pending transactions to calculate live balance and group by staff
+        // Loop through pending transactions to group data for ALL views
         db.forEach(tx => {
             if(tx.status === 'Pending') {
+                let staffNameRaw = tx.staff.trim() || "Unknown";
+                let staffKey = staffNameRaw.toUpperCase();
+
                 tx.medicines.forEach(m => {
                     let balance = m.qty - (m.fulfilled || 0);
                     if(balance > 0) {
-                        let normalizedKey = m.name.trim().toUpperCase();
-                        let staffName = tx.staff.trim() || "Unknown"; // Get the staff name from transaction
+                        let medKey = m.name.trim().toUpperCase();
+                        let medNameFormatted = m.name.trim();
+                        let medUnit = m.unit || '';
                         
-                        if(!groupedItems[normalizedKey]) {
-                            groupedItems[normalizedKey] = {
-                                displayName: m.name.trim(), // Keep original format for display
+                        // --- 1. Populate groupedItems (View by Medicine) ---
+                        if(!groupedItems[medKey]) {
+                            groupedItems[medKey] = {
+                                displayName: medNameFormatted,
                                 totalBalance: 0,
-                                unit: m.unit || '', // Include unit in summary
-                                staffBreakdown: {} // New object to track per staff count
+                                unit: medUnit,
+                                staffBreakdown: {} 
                             };
                         }
-                        
-                        groupedItems[normalizedKey].totalBalance += balance;
-                        
-                        // Add to specific staff breakdown
-                        if(!groupedItems[normalizedKey].staffBreakdown[staffName]) {
-                            groupedItems[normalizedKey].staffBreakdown[staffName] = 0;
+                        groupedItems[medKey].totalBalance += balance;
+                        if(!groupedItems[medKey].staffBreakdown[staffNameRaw]) {
+                            groupedItems[medKey].staffBreakdown[staffNameRaw] = 0;
                         }
-                        groupedItems[normalizedKey].staffBreakdown[staffName] += balance;
+                        groupedItems[medKey].staffBreakdown[staffNameRaw] += balance;
+
+                        // --- 2. Populate groupedStaff (View by Pharmacist) ---
+                        if(!groupedStaff[staffKey]) {
+                            groupedStaff[staffKey] = {
+                                displayName: staffNameRaw,
+                                totalItemsPending: 0,
+                                itemBreakdown: {}
+                            };
+                        }
+                        groupedStaff[staffKey].totalItemsPending += balance;
+                        
+                        if(!groupedStaff[staffKey].itemBreakdown[medNameFormatted]) {
+                            groupedStaff[staffKey].itemBreakdown[medNameFormatted] = {
+                                qty: 0,
+                                unit: medUnit
+                            };
+                        }
+                        groupedStaff[staffKey].itemBreakdown[medNameFormatted].qty += balance;
+
+                        // --- 3. Populate Flat List (Quick View) ---
+                        flatList.push({
+                            staff: staffNameRaw,
+                            medicine: medNameFormatted,
+                            balance: balance,
+                            unit: medUnit
+                        });
                     }
                 });
             }
         });
 
-        // Convert object map to array and sort by highest balance
-        let sortedArray = Object.values(groupedItems).sort((a, b) => b.totalBalance - a.totalBalance);
-
-        if(sortedArray.length === 0) {
-            summaryBody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: var(--secondary); font-style: italic;">No pending items or balances found.</td></tr>`;
+        // ==========================================
+        // RENDER VIEW 1: BY MEDICINE
+        // ==========================================
+        let sortedMeds = Object.values(groupedItems).sort((a, b) => b.totalBalance - a.totalBalance);
+        
+        if(sortedMeds.length === 0) {
+            let emptyHtml = `<tr><td colspan="3" style="text-align: center; color: var(--secondary); font-style: italic;">No pending items or balances found.</td></tr>`;
+            summaryBodyMed.innerHTML = emptyHtml;
+            summaryBodyStaff.innerHTML = emptyHtml;
+            summaryBodyFlat.innerHTML = emptyHtml;
             return;
         }
 
-        // Render to modal table with breakdown rows
-        sortedArray.forEach((item, index) => {
+        sortedMeds.forEach((item, index) => {
             const unitLabel = item.unit ? ` <span style="font-size: 0.8rem; color: #64748b;">${item.unit}</span>` : '';
+            const breakdownId = `med-breakdown-${index}`;
             
-            // 1. Create the Main Row (Clickable)
             const trMain = document.createElement('tr');
             trMain.className = 'main-item-row';
-            trMain.onclick = () => toggleBreakdown(index, trMain);
+            trMain.onclick = () => toggleBreakdown(breakdownId, trMain);
             trMain.innerHTML = `
                 <td style="font-weight: 600; font-size: 0.95rem; color: var(--primary-dark); padding-left: 20px;">
                     <span class="toggle-icon">▶</span> ${item.displayName}
@@ -1309,7 +1431,6 @@
                 <td style="text-align: right;"><span class="balance-alert" style="font-size: 1.1rem; padding: 4px 10px;">${item.totalBalance}${unitLabel}</span></td>
             `;
             
-            // 2. Create the Breakdown HTML content
             let breakdownHtml = `<div class="breakdown-container">
                 <div style="font-weight: 700; font-size: 0.75rem; color: var(--secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Pending Staff Assignment</div>`;
             
@@ -1322,16 +1443,71 @@
             }
             breakdownHtml += `</div>`;
 
-            // 3. Create the Detail Row (Hidden by default)
             const trDetail = document.createElement('tr');
-            trDetail.id = `breakdown-${index}`;
+            trDetail.id = breakdownId;
             trDetail.className = 'staff-breakdown-row';
-            trDetail.innerHTML = `
-                <td colspan="2" style="padding: 0;">${breakdownHtml}</td>
-            `;
+            trDetail.innerHTML = `<td colspan="2" style="padding: 0;">${breakdownHtml}</td>`;
 
-            summaryBody.appendChild(trMain);
-            summaryBody.appendChild(trDetail);
+            summaryBodyMed.appendChild(trMain);
+            summaryBodyMed.appendChild(trDetail);
+        });
+
+        // ==========================================
+        // RENDER VIEW 2: BY PHARMACIST
+        // ==========================================
+        let sortedStaff = Object.values(groupedStaff).sort((a, b) => b.totalItemsPending - a.totalItemsPending);
+
+        sortedStaff.forEach((staffData, index) => {
+            const breakdownId = `staff-breakdown-${index}`;
+            
+            const trMain = document.createElement('tr');
+            trMain.className = 'main-item-row';
+            trMain.onclick = () => toggleBreakdown(breakdownId, trMain);
+            trMain.innerHTML = `
+                <td style="font-weight: 600; font-size: 0.95rem; color: var(--primary-dark); padding-left: 20px;">
+                    <span class="toggle-icon">▶</span> 👩‍⚕️ ${staffData.displayName}
+                </td>
+                <td style="text-align: right;"><span class="balance-alert" style="font-size: 1.1rem; padding: 4px 10px;">${staffData.totalItemsPending} Items</span></td>
+            `;
+            
+            let breakdownHtml = `<div class="breakdown-container" style="border-left-color: #f59e0b;">
+                <div style="font-weight: 700; font-size: 0.75rem; color: var(--secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Missing Medicines for ${staffData.displayName}</div>`;
+            
+            for (const [medName, data] of Object.entries(staffData.itemBreakdown)) {
+                const unitLabel = data.unit ? ` <span style="font-size: 0.8rem; color: #64748b;">${data.unit}</span>` : '';
+                breakdownHtml += `
+                    <div class="breakdown-item">
+                        <span>📦 ${medName}</span>
+                        <span style="font-weight: 600; color: var(--text-main);">${data.qty}${unitLabel}</span>
+                    </div>`;
+            }
+            breakdownHtml += `</div>`;
+
+            const trDetail = document.createElement('tr');
+            trDetail.id = breakdownId;
+            trDetail.className = 'staff-breakdown-row';
+            trDetail.innerHTML = `<td colspan="2" style="padding: 0;">${breakdownHtml}</td>`;
+
+            summaryBodyStaff.appendChild(trMain);
+            summaryBodyStaff.appendChild(trDetail);
+        });
+
+        // ==========================================
+        // RENDER VIEW 3: QUICK VIEW (FLAT LIST)
+        // ==========================================
+        // Sort alphabetically by staff name, then medicine name
+        flatList.sort((a, b) => a.staff.localeCompare(b.staff) || a.medicine.localeCompare(b.medicine));
+
+        flatList.forEach(item => {
+            const unitLabel = item.unit ? ` <span style="font-size: 0.8rem; color: #64748b;">${item.unit}</span>` : '';
+            const tr = document.createElement('tr');
+            // Using generic rows, not clickable
+            tr.innerHTML = `
+                <td style="font-weight: 600; color: var(--primary-dark);">👩‍⚕️ ${item.staff}</td>
+                <td>📦 ${item.medicine}</td>
+                <td style="text-align: right;"><span class="balance-alert" style="font-size: 1rem; padding: 4px 10px;">${item.balance}${unitLabel}</span></td>
+            `;
+            summaryBodyFlat.appendChild(tr);
         });
     };
 
