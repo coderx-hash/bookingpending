@@ -1,89 +1,289 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking Pending</title>
-    <style>
-        body {
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(to right, #ff7e5f, #feb47b);
-            font-family: Arial, sans-serif;
-        }
-        .card {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            text-align: center;
-            transition: all 0.3s;
-        }
-        h1 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-        button {
-            padding: 0.5rem 1rem;
-            font-size: 1.1rem;
-            background: #ff7e5f;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .hidden {
-            display: none;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Pending</title>
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --panel: rgba(17, 24, 39, 0.78);
+      --panel-solid: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: rgba(255, 255, 255, 0.10);
+      --accent: #22c55e;
+      --accent2: #3b82f6;
+      --danger: #ef4444;
+      --shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      background:
+        radial-gradient(900px 500px at 20% 10%, rgba(59, 130, 246, 0.18), transparent 60%),
+        radial-gradient(800px 450px at 80% 0%, rgba(34, 197, 94, 0.14), transparent 55%),
+        radial-gradient(900px 600px at 50% 110%, rgba(239, 68, 68, 0.10), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+    }
+
+    .card {
+      width: min(860px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 26px 26px 18px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent);
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      letter-spacing: 0.3px;
+    }
+
+    .header p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.4;
+      font-size: 0.95rem;
+    }
+
+    .content {
+      padding: 22px 26px 26px;
+    }
+
+    .intro-actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 14px;
+      font-size: 1rem;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+      transition: transform 0.08s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+
+    button:hover {
+      background: rgba(255,255,255,0.10);
+      border-color: rgba(255,255,255,0.20);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, rgba(34,197,94,0.95), rgba(59,130,246,0.85));
+      border-color: rgba(255,255,255,0.18);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, rgba(34,197,94,1), rgba(59,130,246,0.95));
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: end;
+      margin: 0;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(17, 24, 39, 0.55);
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="date"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.25);
+      color: var(--text);
+      outline: none;
+    }
+
+    input[type="date"]:focus {
+      border-color: rgba(59, 130, 246, 0.7);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+    }
+
+    .table-wrap {
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(17, 24, 39, 0.45);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.95rem;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      background: rgba(255,255,255,0.04);
+    }
+
+    tr:hover td {
+      background: rgba(255,255,255,0.03);
+    }
+
+    .hidden { display: none !important; }
+
+    .footer-hint {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 560px) {
+      form {
+        grid-template-columns: 1fr;
+      }
+
+      .intro-actions {
+        width: 100%;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Welcome to Booking System</h1>
-        <button id="enterBtn">Enter System</button>
-        <div id="mainContent" class="hidden">
-            <form id="transactionForm">
-                <label for="glDate">GL Approved Date:</label>
-                <input type="date" id="glDate" required>
-                <button type="submit">Submit</button>
-            </form>
-            <table id="entriesTable">
-                <tr><th>Entry</th></tr>
-                <!-- Entries will be populated here -->
-            </table>
-        </div>
+  <div class="card">
+    <!-- Intro (Black Theme) -->
+    <div id="intro" class="header">
+      <h1>Welcome to Booking System</h1>
+      <p>
+        Click <strong>Enter System</strong> to go directly to the fill-up form.
+      </p>
+      <div class="intro-actions">
+        <button id="enterBtn" class="btn-primary" type="button">Enter System</button>
+      </div>
     </div>
-    <script>
-        const enterBtn = document.getElementById('enterBtn');
-        const mainContent = document.getElementById('mainContent');
-        const glDateInput = document.getElementById('glDate');
-        const transactionForm = document.getElementById('transactionForm');
-        const entriesTable = document.getElementById('entriesTable');
 
-        // Show main content when Enter System is clicked
-        enterBtn.addEventListener('click', () => {
-            mainContent.classList.remove('hidden');
-            // Optionally store in localStorage
-            localStorage.setItem('enteredSystem', 'true');
-        });
+    <!-- Main Content (Fill-up Form) -->
+    <div id="mainContent" class="content hidden">
+      <h2 class="section-title">Fill-up Form</h2>
 
-        // Validate the form before submission
-        transactionForm.addEventListener('submit', (e) => {
-            if (!glDateInput.value) {
-                e.preventDefault(); // Prevent submission if GL Date is empty
-                alert('GL Approved Date is required.');
-            } else {
-                // Logic to add entry to the table
-                const newEntry = document.createElement('tr');
-                newEntry.innerHTML = `<td>${glDateInput.value}</td>`;
-                entriesTable.appendChild(newEntry);
-                // Optionally, clear the input for a new entry
-                glDateInput.value = '';
-            }
-        });
-    </script>
+      <form id="transactionForm">
+        <div>
+          <label for="glDate">GL Approved Date</label>
+          <input type="date" id="glDate" required />
+        </div>
+        <button type="submit" class="btn-primary">Submit</button>
+      </form>
+
+      <div class="table-wrap">
+        <table id="entriesTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>GL Approved Date</th>
+            </tr>
+          </thead>
+          <tbody id="entriesBody">
+            <!-- Entries will be populated here -->
+          </tbody>
+        </table>
+      </div>
+      <div class="footer-hint">Tip: You can submit multiple dates; they will appear below.</div>
+    </div>
+  </div>
+
+  <script>
+    const intro = document.getElementById('intro');
+    const enterBtn = document.getElementById('enterBtn');
+    const mainContent = document.getElementById('mainContent');
+
+    const glDateInput = document.getElementById('glDate');
+    const transactionForm = document.getElementById('transactionForm');
+    const entriesBody = document.getElementById('entriesBody');
+
+    function showMain() {
+      intro.classList.add('hidden');
+      mainContent.classList.remove('hidden');
+      localStorage.setItem('enteredSystem', 'true');
+    }
+
+    // If user already entered before, skip intro
+    if (localStorage.getItem('enteredSystem') === 'true') {
+      showMain();
+    }
+
+    // Show main content when Enter System is clicked
+    enterBtn.addEventListener('click', () => {
+      showMain();
+    });
+
+    // Validate the form before submission and avoid page reload
+    transactionForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      if (!glDateInput.value) {
+        alert('GL Approved Date is required.');
+        return;
+      }
+
+      const rowCount = entriesBody.children.length;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${rowCount + 1}</td><td>${glDateInput.value}</td>`;
+      entriesBody.appendChild(tr);
+
+      glDateInput.value = '';
+      glDateInput.focus();
+    });
+  </script>
 </body>
 </html>
