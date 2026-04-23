@@ -4,77 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booking Pending</title>
-    <link rel="stylesheet" href="styles.css">
     <style>
-      /* Include any necessary styles to keep consistency */
-      #introScreen {
-        display: none;
-      }
-      .hidden {
-        display: none;
-      }
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            font-family: Arial, sans-serif;
+        }
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.3s;
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 1.1rem;
+            background: #ff7e5f;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <div id="introScreen">
-        <h1>Booking Pending</h1>
-        <p>Created by Gelo Cutler</p>
-        <button id="enterButton">Enter System</button>
+    <div class="card">
+        <h1>Welcome to Booking System</h1>
+        <button id="enterBtn">Enter System</button>
+        <div id="mainContent" class="hidden">
+            <form id="transactionForm">
+                <label for="glDate">GL Approved Date:</label>
+                <input type="date" id="glDate" required>
+                <button type="submit">Submit</button>
+            </form>
+            <table id="entriesTable">
+                <tr><th>Entry</th></tr>
+                <!-- Entries will be populated here -->
+            </table>
+        </div>
     </div>
-
-    <div id="mainContent" class="hidden">
-        <h2>New Transaction</h2>
-        <form id="transactionForm">
-            <label for="glApprovedDate">GL Approved Date:</label>
-            <input type="date" id="glApprovedDate" name="glApprovedDate" required>
-            <input type="submit" value="Submit">
-        </form>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>GL Start</th>
-                </tr>
-            </thead>
-            <tbody id="pendingStockSummary">
-                <!-- Rows will be populated dynamically -->
-            </tbody>
-        </table>
-    </div>
-
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const introScreen = document.getElementById('introScreen');
-            const mainContent = document.getElementById('mainContent');
-            const enterButton = document.getElementById('enterButton');
+        const enterBtn = document.getElementById('enterBtn');
+        const mainContent = document.getElementById('mainContent');
+        const glDateInput = document.getElementById('glDate');
+        const transactionForm = document.getElementById('transactionForm');
+        const entriesTable = document.getElementById('entriesTable');
 
-            // Check local storage to see if user has entered the system before
-            if (localStorage.getItem('enteredSystem')) {
-                introScreen.classList.add('hidden');
-                mainContent.classList.remove('hidden');
+        // Show main content when Enter System is clicked
+        enterBtn.addEventListener('click', () => {
+            mainContent.classList.remove('hidden');
+            // Optionally store in localStorage
+            localStorage.setItem('enteredSystem', 'true');
+        });
+
+        // Validate the form before submission
+        transactionForm.addEventListener('submit', (e) => {
+            if (!glDateInput.value) {
+                e.preventDefault(); // Prevent submission if GL Date is empty
+                alert('GL Approved Date is required.');
             } else {
-                introScreen.style.display = 'block';
+                // Logic to add entry to the table
+                const newEntry = document.createElement('tr');
+                newEntry.innerHTML = `<td>${glDateInput.value}</td>`;
+                entriesTable.appendChild(newEntry);
+                // Optionally, clear the input for a new entry
+                glDateInput.value = '';
             }
-
-            enterButton.addEventListener('click', function() {
-                localStorage.setItem('enteredSystem', 'true');
-                introScreen.classList.add('hidden');
-                mainContent.classList.remove('hidden');
-            });
-
-            document.getElementById('transactionForm').addEventListener('submit', function(event) {
-                event.preventDefault();
-                const entry = {
-                    glApprovedDate: document.getElementById('glApprovedDate').value,
-                    glStartDate: new Date().toISOString() // Capture the current date/time
-                };
-                // Add new entry to the stock summary table
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>New Item</td><td>${entry.glStartDate}</td>`;
-                document.getElementById('pendingStockSummary').appendChild(row);
-                this.reset(); // Reset form fields after submission
-            });
         });
     </script>
 </body>
