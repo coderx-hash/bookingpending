@@ -954,14 +954,17 @@
             font-weight: 700;
             font-size: 0.85rem;
         }
-        .days-safe {
-            background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;
+        .days-safe { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .days-warn { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .days-danger { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+        /* Clickable Row Logic */
+        .clickable-row {
+            transition: background-color 0.2s ease;
         }
-        .days-warn {
-            background: #fef3c7; color: #92400e; border: 1px solid #fde68a;
-        }
-        .days-danger {
-            background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;
+        .clickable-row:hover {
+            background-color: #f1f5f9;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -970,6 +973,22 @@
     <div id="intro-overlay">
         <div class="intro-brand">PharmaTrack Pro</div>
         <div class="intro-loader"></div>
+    </div>
+
+    <div class="modal-overlay" id="overdueAlertPopup" style="z-index: 100001;">
+        <div class="modal-container" style="max-width: 450px; text-align: center; border-top: 5px solid var(--danger);">
+            <div class="modal-body" style="padding: 30px;">
+                <div style="font-size: 3rem; margin-bottom: 10px;">⚠️</div>
+                <h2 style="color: var(--danger); font-size: 1.5rem; margin-bottom: 15px;">Reminder!</h2>
+                <p style="font-size: 1.1rem; color: var(--text-main); font-weight: 600; margin-bottom: 25px;">
+                    Kindly see your overdue transaction(s).
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button class="btn-submit" style="background: var(--danger); width: auto; padding: 10px 20px;" onclick="viewOverdueFromAlert()">View Overdue Now</button>
+                    <button class="btn-delete" style="width: auto; padding: 10px 20px;" onclick="closeOverdueAlert()">Later</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="header">
@@ -1033,7 +1052,7 @@
                                 <option value="cap">cap</option>
                                 <option value="pfs">pfs</option>
                             </select>
-                            <input type="number" step="1" placeholder="Qty" class="form-control med-qty" required />
+                            <input type="text" placeholder="Qty" class="form-control med-qty" required oninput="formatQuantity(this)" />
                             <button type="button" class="btn-remove-med" onclick="this.parentElement.remove()" style="visibility:hidden">×</button>
                         </div>
                     </div>
@@ -1043,11 +1062,11 @@
                 <div class="calc-box">
                     <div class="form-group" style="margin:0">
                         <label>Total Bill</label>
-                        <input type="number" id="totalAmt" class="form-control" oninput="calcExcess()" step="0.01" placeholder="0.00" required />
+                        <input type="text" id="totalAmt" class="form-control" oninput="formatCurrencyInput(this); calcExcess();" placeholder="0.00" required />
                     </div>
                     <div class="form-group" style="margin:0">
                         <label>GL Amount</label>
-                        <input type="number" id="glAmt" class="form-control" oninput="calcExcess()" step="0.01" placeholder="0.00" required />
+                        <input type="text" id="glAmt" class="form-control" oninput="formatCurrencyInput(this); calcExcess();" placeholder="0.00" required />
                     </div>
                     <div class="total-highlight">
                         <label>PAYABLE (CASH)</label>
@@ -1210,7 +1229,8 @@
                                 <th>Reference / GL Date</th>
                                 <th>Pharmacist Name</th>
                                 <th>Medicine / Item</th>
-                                <th style="text-align: center;">Days Pending</th> <th style="text-align: right;">Pending Balance</th>
+                                <th style="text-align: center;">Days Pending</th>
+                                <th style="text-align: right;">Pending Balance</th>
                             </tr>
                         </thead>
                         <tbody id="summaryBodyFlat"></tbody>
@@ -1255,35 +1275,53 @@
     </div>
 
 <script>
+    // --- FORMATTING HELPERS ---
+    // Auto-comma para sa Quantity (Whole numbers only)
+    function formatQuantity(input) {
+        let val = input.value.replace(/[^0-9]/g, '');
+        input.value = val.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // Auto-comma para sa Bills/Amount (With Decimals)
+    function formatCurrencyInput(input) {
+        let val = input.value.replace(/[^0-9.]/g, '');
+        let parts = val.split('.');
+        if (parts.length > 2) {
+            parts.pop();
+            val = parts.join('.');
+        }
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        input.value = parts.join('.');
+    }
+
     // --- INTRO SCREEN LOGIC ---
+    let hasShownOverdueAlert = false;
+
     window.addEventListener('load', () => {
         setTimeout(() => {
             const intro = document.getElementById('intro-overlay');
             intro.style.opacity = '0';
             intro.style.visibility = 'hidden';
-            setTimeout(() => intro.remove(), 600); // Wait for fade out transition
-        }, 1500); // 1.5 seconds loading view
+            setTimeout(() => intro.remove(), 600); 
+        }, 1500); 
     });
 
     // --- JAVASCRIPT LOGIC ---
     let db = JSON.parse(localStorage.getItem('pharmaDB_v9')) || [];
     let activeStaffFilter = null;
-    let activeModalView = 'med'; // 'med', 'staff', or 'flat'
+    let activeModalView = 'med';
 
     // Helper: Calculate Days Pending based on Creation Date
     function calculateDaysPending(dateString) {
         try {
-            // dateString format in DB is typically "MM/DD/YYYY HH:MM AM/PM"
             const created = new Date(dateString.split(' ')[0]);
             const today = new Date();
-            // Normalize times to midnight to get exact day difference
             created.setHours(0,0,0,0);
             today.setHours(0,0,0,0);
-            
             const diffTime = today.getTime() - created.getTime();
             return Math.floor(diffTime / (1000 * 60 * 60 * 24));
         } catch(e) {
-            return 0; // Fallback
+            return 0;
         }
     }
 
@@ -1319,15 +1357,17 @@
                 <option value="cap">cap</option>
                 <option value="pfs">pfs</option>
             </select>
-            <input type="number" step="1" placeholder="Qty" class="form-control med-qty" required />
+            <input type="text" placeholder="Qty" class="form-control med-qty" required oninput="formatQuantity(this)" />
             <button type="button" class="btn-remove-med" onclick="this.parentElement.remove()">×</button>
         `;
         container.appendChild(div);
     }
 
     function calcExcess() {
-        const total = parseFloat(document.getElementById('totalAmt').value) || 0;
-        const gl = parseFloat(document.getElementById('glAmt').value) || 0;
+        const totalStr = document.getElementById('totalAmt').value.replace(/,/g, '');
+        const glStr = document.getElementById('glAmt').value.replace(/,/g, '');
+        const total = parseFloat(totalStr) || 0;
+        const gl = parseFloat(glStr) || 0;
         let diff = total - gl;
         document.getElementById('excessAmt').value = diff.toLocaleString('en-US', {
             minimumFractionDigits: 2,
@@ -1338,8 +1378,6 @@
     // --- SUBMIT TRANSACTION INTERCEPT ---
     document.getElementById('mainForm').addEventListener('submit', (e) => {
         e.preventDefault();
-        
-        // Show GL Date Prompt first
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('inputGlDate').value = today;
         document.getElementById('glDateModal').style.display = 'flex';
@@ -1355,8 +1393,6 @@
             alert("Please select a GL Approval Date.");
             return;
         }
-        
-        // Close modal and proceed to save
         closeGlDateModal();
         processFinalTransaction(glDateInput);
     }
@@ -1364,24 +1400,20 @@
     function processFinalTransaction(glDateStr) {
         const meds = [];
         document.querySelectorAll('.medicine-entry').forEach(row => {
-            const q = parseInt(row.querySelector('.med-qty').value) || 0;
+            const qStr = row.querySelector('.med-qty').value.replace(/,/g, '');
+            const q = parseInt(qStr) || 0;
             const n = row.querySelector('.med-name').value;
             const u = row.querySelector('.med-unit').value || '';
             
             if (n && q > 0 && u) {
-                meds.push({
-                    name: n,
-                    unit: u,
-                    qty: q,
-                    fulfilled: 0,
-                    checked: false,
-                    doNumber: ''
-                });
+                meds.push({ name: n, unit: u, qty: q, fulfilled: 0, checked: false, doNumber: '' });
             }
         });
 
-        const total = parseFloat(document.getElementById('totalAmt').value) || 0;
-        const gl = parseFloat(document.getElementById('glAmt').value) || 0;
+        const totalStr = document.getElementById('totalAmt').value.replace(/,/g, '');
+        const glStr = document.getElementById('glAmt').value.replace(/,/g, '');
+        const total = parseFloat(totalStr) || 0;
+        const gl = parseFloat(glStr) || 0;
         const excess = total - gl;
 
         const entry = {
@@ -1395,7 +1427,7 @@
             staff: document.getElementById('staffName').value,
             status: 'Pending',
             date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            glDate: glDateStr // Saved GL Date Here
+            glDate: glDateStr
         };
 
         db.unshift(entry);
@@ -1414,7 +1446,7 @@
                     <option value="cap">cap</option>
                     <option value="pfs">pfs</option>
                 </select>
-                <input type="number" step="1" placeholder="Qty" class="form-control med-qty" required />
+                <input type="text" placeholder="Qty" class="form-control med-qty" required oninput="formatQuantity(this)" />
                 <button type="button" class="btn-remove-med" onclick="this.parentElement.remove()" style="visibility:hidden">×</button>
             </div>`;
     }
@@ -1422,7 +1454,6 @@
     function saveAndRender() {
         localStorage.setItem('pharmaDB_v9', JSON.stringify(db));
         render();
-        // Update summary if modal is currently open
         if(document.getElementById('summaryModal').style.display === 'flex') {
             renderSummaryModal();
         }
@@ -1430,15 +1461,13 @@
 
     // --- LOGIC: CHECKING & BALANCING ---
     window.handleCheck = (event, id, medIndex) => {
-        event.preventDefault(); // Control manually
-
+        event.preventDefault(); 
         const idx = db.findIndex(i => i.id === id);
         if (idx === -1) return;
 
         const item = db[idx].medicines[medIndex];
         const unitLabel = item.unit ? ` ${item.unit}` : '';
 
-        // Reset Logic
         if (item.checked) {
             if (confirm("Mark this item as incomplete/reset?")) {
                 item.checked = false;
@@ -1449,7 +1478,6 @@
             return;
         }
 
-        // Logic Loop
         let doInput = prompt("Enter D.O. Number (Delivery Order):", item.doNumber);
         if (doInput == null || doInput.trim() === "") return;
 
@@ -1457,9 +1485,10 @@
         let requiredQty = item.qty;
         let missing = requiredQty - currentFulfilled;
 
-        let qtyInput = prompt(`Item: ${item.name}\nRequired Total: ${requiredQty}${unitLabel}\nAlready Received: ${currentFulfilled}${unitLabel}\n\nBalance Needed: ${missing}${unitLabel}\n\nEnter Quantity Received NOW:`, missing);
+        let qtyInput = prompt(`Item: ${item.name}\nRequired Total: ${requiredQty.toLocaleString()}${unitLabel}\nAlready Received: ${currentFulfilled.toLocaleString()}${unitLabel}\n\nBalance Needed: ${missing.toLocaleString()}${unitLabel}\n\nEnter Quantity Received NOW:`, missing);
 
-        let qtyReceived = parseInt(qtyInput);
+        if (qtyInput == null) return;
+        let qtyReceived = parseInt(qtyInput.replace(/,/g, ''));
         if (isNaN(qtyReceived) || qtyReceived <= 0) {
             alert("Invalid quantity.");
             return;
@@ -1472,9 +1501,8 @@
             item.checked = true;
             item.fulfilled = item.qty;
         } else {
-            alert(`Partial Receive Recorded.\nBalance Remaining: ${item.qty - item.fulfilled}${unitLabel}`);
+            alert(`Partial Receive Recorded.\nBalance Remaining: ${(item.qty - item.fulfilled).toLocaleString()}${unitLabel}`);
         }
-
         saveAndRender();
     };
 
@@ -1518,6 +1546,25 @@
         render();
     }
 
+    // --- JUMP TO TRANSACTION ---
+    window.jumpToTransaction = (soNum) => {
+        closeOverdueModal();
+        switchTab(null, 'pending-tab');
+        document.getElementById('pendingSearch').value = soNum;
+        activeStaffFilter = null; // reset staff filter so we guarantee we see it
+        render();
+    };
+
+    // --- URGENT ALERT MODAL LOGIC ---
+    window.closeOverdueAlert = () => {
+        document.getElementById('overdueAlertPopup').style.display = 'none';
+    };
+
+    window.viewOverdueFromAlert = () => {
+        closeOverdueAlert();
+        openOverdueModal();
+    };
+
     // --- OVERDUE MODAL LOGIC ---
     window.openOverdueModal = () => {
         document.getElementById('overdueModal').style.display = 'flex';
@@ -1540,6 +1587,10 @@
                 if (daysPend >= 10) {
                     hasOverdue = true;
                     const tr = document.createElement('tr');
+                    tr.className = 'clickable-row'; // Makes it hoverable
+                    tr.title = "Click to jump to this transaction";
+                    tr.onclick = () => jumpToTransaction(tx.so); // Magic jump function!
+                    
                     tr.innerHTML = `
                         <td style="font-weight:700; color:var(--text-main);">${tx.so}</td>
                         <td>${tx.patient}</td>
@@ -1568,32 +1619,22 @@
     };
 
     window.closeModalOutside = (e) => {
-        if(e.target === document.getElementById('summaryModal')) {
-            closeSummaryModal();
-        }
-        if(e.target === document.getElementById('glDateModal')) {
-            closeGlDateModal();
-        }
-        if(e.target === document.getElementById('overdueModal')) {
-            closeOverdueModal();
-        }
+        if(e.target === document.getElementById('summaryModal')) closeSummaryModal();
+        if(e.target === document.getElementById('glDateModal')) closeGlDateModal();
+        if(e.target === document.getElementById('overdueModal')) closeOverdueModal();
+        if(e.target === document.getElementById('overdueAlertPopup')) closeOverdueAlert();
     };
 
     window.switchModalView = (view) => {
         activeModalView = view;
-        
-        // Buttons
         document.getElementById('btnToggleMed').classList.toggle('active', view === 'med');
         document.getElementById('btnToggleStaff').classList.toggle('active', view === 'staff');
         document.getElementById('btnToggleFlat').classList.toggle('active', view === 'flat');
-        
-        // Containers
         document.getElementById('modalViewMedicine').style.display = view === 'med' ? 'block' : 'none';
         document.getElementById('modalViewStaff').style.display = view === 'staff' ? 'block' : 'none';
         document.getElementById('modalViewFlat').style.display = view === 'flat' ? 'block' : 'none';
     };
 
-    // Function to toggle the breakdown rows inside collapsible tables
     window.toggleBreakdown = (rowId, rowElement) => {
         const detailRow = document.getElementById(rowId);
         if(detailRow.classList.contains('show')) {
@@ -1618,13 +1659,12 @@
         let groupedStaff = {};
         let flatList = [];
 
-        // Loop through pending transactions to group data for ALL views
         db.forEach(tx => {
             if(tx.status === 'Pending') {
                 let staffNameRaw = tx.staff.trim() || "Unknown";
                 let staffKey = staffNameRaw.toUpperCase();
                 let glDisplayDate = tx.glDate || '--';
-                let daysPend = calculateDaysPending(tx.date); // Calculate days
+                let daysPend = calculateDaysPending(tx.date); 
 
                 tx.medicines.forEach(m => {
                     let balance = m.qty - (m.fulfilled || 0);
@@ -1633,14 +1673,8 @@
                         let medNameFormatted = m.name.trim();
                         let medUnit = m.unit || '';
                         
-                        // --- 1. Populate groupedItems (View by Medicine) ---
                         if(!groupedItems[medKey]) {
-                            groupedItems[medKey] = {
-                                displayName: medNameFormatted,
-                                totalBalance: 0,
-                                unit: medUnit,
-                                staffBreakdown: {} 
-                            };
+                            groupedItems[medKey] = { displayName: medNameFormatted, totalBalance: 0, unit: medUnit, staffBreakdown: {} };
                         }
                         groupedItems[medKey].totalBalance += balance;
                         if(!groupedItems[medKey].staffBreakdown[staffNameRaw]) {
@@ -1648,25 +1682,16 @@
                         }
                         groupedItems[medKey].staffBreakdown[staffNameRaw] += balance;
 
-                        // --- 2. Populate groupedStaff (View by Pharmacist) ---
                         if(!groupedStaff[staffKey]) {
-                            groupedStaff[staffKey] = {
-                                displayName: staffNameRaw,
-                                totalItemsPending: 0,
-                                itemBreakdown: {}
-                            };
+                            groupedStaff[staffKey] = { displayName: staffNameRaw, totalItemsPending: 0, itemBreakdown: {} };
                         }
                         groupedStaff[staffKey].totalItemsPending += balance;
                         
                         if(!groupedStaff[staffKey].itemBreakdown[medNameFormatted]) {
-                            groupedStaff[staffKey].itemBreakdown[medNameFormatted] = {
-                                qty: 0,
-                                unit: medUnit
-                            };
+                            groupedStaff[staffKey].itemBreakdown[medNameFormatted] = { qty: 0, unit: medUnit };
                         }
                         groupedStaff[staffKey].itemBreakdown[medNameFormatted].qty += balance;
 
-                        // --- 3. Populate Flat List (Quick View) ---
                         flatList.push({
                             so: tx.so,
                             glDate: glDisplayDate, 
@@ -1674,18 +1699,14 @@
                             medicine: medNameFormatted,
                             balance: balance,
                             unit: medUnit,
-                            daysPending: daysPend // Store days for rendering
+                            daysPending: daysPend
                         });
                     }
                 });
             }
         });
 
-        // ==========================================
-        // RENDER VIEW 1: BY MEDICINE
-        // ==========================================
         let sortedMeds = Object.values(groupedItems).sort((a, b) => b.totalBalance - a.totalBalance);
-        
         if(sortedMeds.length === 0) {
             let emptyHtml = `<tr><td colspan="5" style="text-align: center; color: var(--secondary); font-style: italic;">No pending items or balances found.</td></tr>`;
             summaryBodyMed.innerHTML = emptyHtml;
@@ -1697,104 +1718,59 @@
         sortedMeds.forEach((item, index) => {
             const unitLabel = item.unit ? ` <span style="font-size: 0.8rem; color: #64748b;">${item.unit}</span>` : '';
             const breakdownId = `med-breakdown-${index}`;
-            
             const trMain = document.createElement('tr');
             trMain.className = 'main-item-row';
             trMain.onclick = () => toggleBreakdown(breakdownId, trMain);
-            trMain.innerHTML = `
-                <td style="font-weight: 600; font-size: 0.95rem; color: var(--primary-dark); padding-left: 20px;">
-                    <span class="toggle-icon">▶</span> ${item.displayName}
-                </td>
-                <td style="text-align: right;"><span class="balance-alert" style="font-size: 1.1rem; padding: 4px 10px;">${item.totalBalance}${unitLabel}</span></td>
-            `;
+            trMain.innerHTML = `<td style="font-weight: 600; font-size: 0.95rem; color: var(--primary-dark); padding-left: 20px;"><span class="toggle-icon">▶</span> ${item.displayName}</td><td style="text-align: right;"><span class="balance-alert" style="font-size: 1.1rem; padding: 4px 10px;">${item.totalBalance.toLocaleString()}${unitLabel}</span></td>`;
             
-            let breakdownHtml = `<div class="breakdown-container">
-                <div style="font-weight: 700; font-size: 0.75rem; color: var(--secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Pending Staff Assignment</div>`;
-            
+            let breakdownHtml = `<div class="breakdown-container"><div style="font-weight: 700; font-size: 0.75rem; color: var(--secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Pending Staff Assignment</div>`;
             for (const [staff, qty] of Object.entries(item.staffBreakdown)) {
-                breakdownHtml += `
-                    <div class="breakdown-item">
-                        <span>👩‍⚕️ ${staff}</span>
-                        <span style="font-weight: 600; color: var(--text-main);">${qty}${unitLabel}</span>
-                    </div>`;
+                breakdownHtml += `<div class="breakdown-item"><span>👩‍⚕️ ${staff}</span><span style="font-weight: 600; color: var(--text-main);">${qty.toLocaleString()}${unitLabel}</span></div>`;
             }
             breakdownHtml += `</div>`;
-
             const trDetail = document.createElement('tr');
             trDetail.id = breakdownId;
             trDetail.className = 'staff-breakdown-row';
             trDetail.innerHTML = `<td colspan="2" style="padding: 0;">${breakdownHtml}</td>`;
-
             summaryBodyMed.appendChild(trMain);
             summaryBodyMed.appendChild(trDetail);
         });
 
-        // ==========================================
-        // RENDER VIEW 2: BY PHARMACIST
-        // ==========================================
         let sortedStaff = Object.values(groupedStaff).sort((a, b) => b.totalItemsPending - a.totalItemsPending);
-
         sortedStaff.forEach((staffData, index) => {
             const breakdownId = `staff-breakdown-${index}`;
-            
             const trMain = document.createElement('tr');
             trMain.className = 'main-item-row';
             trMain.onclick = () => toggleBreakdown(breakdownId, trMain);
-            trMain.innerHTML = `
-                <td style="font-weight: 600; font-size: 0.95rem; color: var(--primary-dark); padding-left: 20px;">
-                    <span class="toggle-icon">▶</span> 👩‍⚕️ ${staffData.displayName}
-                </td>
-                <td style="text-align: right;"><span class="balance-alert" style="font-size: 1.1rem; padding: 4px 10px;">${staffData.totalItemsPending} Items</span></td>
-            `;
+            trMain.innerHTML = `<td style="font-weight: 600; font-size: 0.95rem; color: var(--primary-dark); padding-left: 20px;"><span class="toggle-icon">▶</span> 👩‍⚕️ ${staffData.displayName}</td><td style="text-align: right;"><span class="balance-alert" style="font-size: 1.1rem; padding: 4px 10px;">${staffData.totalItemsPending.toLocaleString()} Items</span></td>`;
             
-            let breakdownHtml = `<div class="breakdown-container" style="border-left-color: #f59e0b;">
-                <div style="font-weight: 700; font-size: 0.75rem; color: var(--secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Missing Medicines for ${staffData.displayName}</div>`;
-            
+            let breakdownHtml = `<div class="breakdown-container" style="border-left-color: #f59e0b;"><div style="font-weight: 700; font-size: 0.75rem; color: var(--secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Missing Medicines for ${staffData.displayName}</div>`;
             for (const [medName, data] of Object.entries(staffData.itemBreakdown)) {
                 const unitLabel = data.unit ? ` <span style="font-size: 0.8rem; color: #64748b;">${data.unit}</span>` : '';
-                breakdownHtml += `
-                    <div class="breakdown-item">
-                        <span>📦 ${medName}</span>
-                        <span style="font-weight: 600; color: var(--text-main);">${data.qty}${unitLabel}</span>
-                    </div>`;
+                breakdownHtml += `<div class="breakdown-item"><span>📦 ${medName}</span><span style="font-weight: 600; color: var(--text-main);">${data.qty.toLocaleString()}${unitLabel}</span></div>`;
             }
             breakdownHtml += `</div>`;
-
             const trDetail = document.createElement('tr');
             trDetail.id = breakdownId;
             trDetail.className = 'staff-breakdown-row';
             trDetail.innerHTML = `<td colspan="2" style="padding: 0;">${breakdownHtml}</td>`;
-
             summaryBodyStaff.appendChild(trMain);
             summaryBodyStaff.appendChild(trDetail);
         });
 
-        // ==========================================
-        // RENDER VIEW 3: QUICK VIEW (FLAT LIST) - UPDATED WITH DAYS PENDING
-        // ==========================================
-        // Sort by longest days pending first, then alphabetically by staff
         flatList.sort((a, b) => b.daysPending - a.daysPending || a.staff.localeCompare(b.staff));
-
         flatList.forEach(item => {
             const unitLabel = item.unit ? ` <span style="font-size: 0.8rem; color: #64748b;">${item.unit}</span>` : '';
-            
-            // Generate Days Badge styling
             let daysClass = 'days-safe';
             if(item.daysPending >= 5 && item.daysPending < 10) daysClass = 'days-warn';
             if(item.daysPending >= 10) daysClass = 'days-danger';
-
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>
-                    <span style="font-weight:700;">${item.so}</span><br>
-                    <span style="font-size:0.8rem; color:var(--primary); font-weight:600;">GL Date: ${item.glDate}</span>
-                </td>
+                <td><span style="font-weight:700;">${item.so}</span><br><span style="font-size:0.8rem; color:var(--primary); font-weight:600;">GL Date: ${item.glDate}</span></td>
                 <td style="font-weight: 600; color: var(--primary-dark);">👩‍⚕️ ${item.staff}</td>
                 <td>📦 ${item.medicine}</td>
-                <td style="text-align: center;">
-                    <span class="days-badge ${daysClass}">${item.daysPending} Days</span>
-                </td>
-                <td style="text-align: right;"><span class="balance-alert" style="font-size: 1rem; padding: 4px 10px;">${item.balance}${unitLabel}</span></td>
+                <td style="text-align: center;"><span class="days-badge ${daysClass}">${item.daysPending} Days</span></td>
+                <td style="text-align: right;"><span class="balance-alert" style="font-size: 1rem; padding: 4px 10px;">${item.balance.toLocaleString()}${unitLabel}</span></td>
             `;
             summaryBodyFlat.appendChild(tr);
         });
@@ -1826,13 +1802,12 @@
         let totalGL = 0;
         let totalExcess = 0;
         let pendingCount = 0;
-        let overdueCount = 0; // New tracking for Overdue
+        let overdueCount = 0; 
 
         const staffMap = {};
         const pendingByStaff = {};
 
         db.forEach(item => {
-            // Check Overdue logic
             let isOverdue = false;
             let daysPending = calculateDaysPending(item.date);
             
@@ -1861,7 +1836,6 @@
             staffMap[staffKeyPerf].gl += Number(item.gl);
             staffMap[staffKeyPerf].excess += Number(item.excess);
 
-            // --- Search Filter ---
             let matchesSearch =
                 item.so.toLowerCase().includes(textSearchVal) ||
                 item.patient.toLowerCase().includes(textSearchVal) ||
@@ -1870,7 +1844,6 @@
 
             if (!matchesSearch) return;
 
-            // --- Build Medicine Table HTML ---
             const medRowsHtml = item.medicines.map((m, index) => {
                 const isChecked = m.checked === true;
                 const balance = m.qty - (m.fulfilled || 0);
@@ -1886,9 +1859,9 @@
                     <tr>
                         <td class="in-check">${checkStatus}</td>
                         <td class="in-item" title="${m.name}">${m.name}</td>
-                        <td class="in-req">${m.qty}${unitDisplay}</td>
-                        <td class="in-gave">${m.fulfilled || 0}${unitDisplay}</td>
-                        <td class="in-bal"><span class="${balanceClass}">${balance}${unitDisplay}</span></td>
+                        <td class="in-req">${m.qty.toLocaleString()}${unitDisplay}</td>
+                        <td class="in-gave">${(m.fulfilled || 0).toLocaleString()}${unitDisplay}</td>
+                        <td class="in-bal"><span class="${balanceClass}">${balance.toLocaleString()}${unitDisplay}</span></td>
                         <td class="in-do">${doDisplay}</td>
                     </tr>
                 `;
@@ -1914,16 +1887,15 @@
 
             const financialCol = `
                 <div class="fin-block">
-                    <div><span class="fin-label">Total:</span><span class="fin-val">₱${item.total.toLocaleString()}</span></div>
-                    <div><span class="fin-label">GL:</span><span class="fin-val">₱${item.gl.toLocaleString()}</span></div>
-                    <div class="fin-total">CASH: ₱${item.excess.toLocaleString()}</div>
+                    <div><span class="fin-label">Total:</span><span class="fin-val">₱${item.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></div>
+                    <div><span class="fin-label">GL:</span><span class="fin-val">₱${item.gl.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></div>
+                    <div class="fin-total">CASH: ₱${item.excess.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
                 </div>
             `;
 
             const glDateHtml = item.glDate ? `<span class="gl-date-meta">GL Date: ${item.glDate}</span>` : '';
             const overduePillHtml = isOverdue ? `<span class="overdue-pill">⚠️ ${daysPending} Days Pending</span>` : '';
 
-            // --- PENDING LIST ---
             if (item.status === 'Pending') {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -1944,7 +1916,6 @@
                 `;
                 pendingBody.appendChild(tr);
             }
-            // --- HISTORY LIST ---
             else {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -1966,7 +1937,14 @@
             }
         });
 
-        // Update Overdue Notification Display
+        // Trigger Alert popup ONLY once per load if there's overdue
+        if (overdueCount > 0 && !hasShownOverdueAlert) {
+            setTimeout(() => {
+                document.getElementById('overdueAlertPopup').style.display = 'flex';
+            }, 1800); // Wait for intro overlay to fade first
+            hasShownOverdueAlert = true;
+        }
+
         const btnOverdue = document.getElementById('btn-overdue-alert');
         const overdueCounter = document.getElementById('overdueCountDisplay');
         if (overdueCount > 0) {
@@ -1976,35 +1954,24 @@
             btnOverdue.style.display = 'none';
         }
 
-        // Update Stats
         document.getElementById('stat-pending').textContent = pendingCount;
         document.getElementById('stat-gl').textContent = '₱ ' + totalGL.toLocaleString('en-US', { minimumFractionDigits: 2 });
         document.getElementById('stat-excess').textContent = '₱ ' + totalExcess.toLocaleString('en-US', { minimumFractionDigits: 2 });
 
-        // Render Queue
         Object.keys(pendingByStaff).forEach(k => {
             const s = pendingByStaff[k];
             const div = document.createElement('div');
             div.className = 'staff-queue-card ' + (activeStaffFilter === k ? 'active-filter' : '');
             div.onclick = () => filterByStaff(k);
             div.title = `Filter transactions by ${s.displayName}`;
-            div.innerHTML = `
-                <span class="staff-q-name">${s.displayName}</span>
-                <span class="staff-q-count">${s.count}</span>
-            `;
+            div.innerHTML = `<span class="staff-q-name">${s.displayName}</span><span class="staff-q-count">${s.count}</span>`;
             queueContainer.appendChild(div);
         });
 
-        // Render Staff Performance
         Object.keys(staffMap).forEach(k => {
             const s = staffMap[k];
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td style="padding-left: 25px; font-weight:600;">${s.displayName}</td>
-                <td style="text-align: center;">${s.count}</td>
-                <td style="text-align: right;">₱ ${s.gl.toLocaleString()}</td>
-                <td style="text-align: right; padding-right:25px;">₱ ${s.excess.toLocaleString()}</td>
-            `;
+            tr.innerHTML = `<td style="padding-left: 25px; font-weight:600;">${s.displayName}</td><td style="text-align: center;">${s.count}</td><td style="text-align: right;">₱ ${s.gl.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td><td style="text-align: right; padding-right:25px;">₱ ${s.excess.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>`;
             staffBody.appendChild(tr);
         });
     }
