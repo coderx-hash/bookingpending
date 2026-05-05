@@ -1419,8 +1419,9 @@
     let activeStaffFilter = null;
     let activeModalView = 'med';
 
-    // Helper: Calculate Days Pending based on Creation Date
+    // Helper: Calculate Days Pending based on GL Date (fallback to Creation Date)
     function calculateDaysPending(dateString) {
+        if (!dateString) return 0;
         try {
             const created = new Date(dateString.split(' ')[0]);
             const today = new Date();
@@ -1700,7 +1701,7 @@
 
         db.forEach(tx => {
             if (tx.status === 'Pending') {
-                const daysPend = calculateDaysPending(tx.date);
+                const daysPend = calculateDaysPending(tx.glDate || tx.date);
                 if (daysPend >= 10) {
                     hasOverdue = true;
                     const tr = document.createElement('tr');
@@ -1781,7 +1782,7 @@
                 let staffNameRaw = tx.staff.trim() || "Unknown";
                 let staffKey = staffNameRaw.toUpperCase();
                 let glDisplayDate = tx.glDate || '--';
-                let daysPend = calculateDaysPending(tx.date); 
+                let daysPend = calculateDaysPending(tx.glDate || tx.date); 
 
                 tx.medicines.forEach(m => {
                     let balance = m.qty - (m.fulfilled || 0);
@@ -1919,7 +1920,7 @@
         let totalGL = 0;
         let totalExcess = 0;
         let pendingCount = 0;
-        let historyCount = 0; // Added for empty state checking
+        let historyCount = 0; 
         let overdueCount = 0; 
 
         const staffMap = {};
@@ -1927,7 +1928,7 @@
 
         db.forEach(item => {
             let isOverdue = false;
-            let daysPending = calculateDaysPending(item.date);
+            let daysPending = calculateDaysPending(item.glDate || item.date);
             
             if (item.status === 'Pending') {
                 pendingCount++;
