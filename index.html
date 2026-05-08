@@ -679,7 +679,8 @@
         .in-check { width: 30px; text-align: center; }
         .in-item { width: 30%; word-break: break-word; }
         .in-req, .in-gave, .in-bal { width: 12%; text-align: center; white-space: nowrap; }
-        .in-do { width: 10%; text-align: right; white-space: nowrap; }
+        .in-do { width: 12%; text-align: right; white-space: nowrap; }
+        .in-act { width: 5%; text-align: center; } /* New Column for Delete Button */
         
         /* Logic Badges */
         .balance-alert {
@@ -716,6 +717,27 @@
             font-size: 0.8rem;
             user-select: none;
         }
+
+        /* Inner Table Item Delete Button */
+        .btn-reset-item {
+            background: #fee2e2;
+            color: #ef4444;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            font-size: 0.95rem;
+        }
+        .btn-reset-item:hover {
+            background: #fecaca;
+            transform: scale(1.05);
+        }
+
         /* Overdue Badge */
         .overdue-pill {
             display: inline-block;
@@ -1621,6 +1643,24 @@
         saveAndRender();
     };
 
+    // --- NEW LOGIC: RESET / DELETE ITEM DELIVERY ---
+    window.resetItem = (event, id, medIndex) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (confirm("Are you sure you want to delete this delivery record? The quantity and D.O. # will be reset.")) {
+            const idx = db.findIndex(i => i.id === id);
+            if (idx === -1) return;
+
+            const item = db[idx].medicines[medIndex];
+            item.checked = false;
+            item.fulfilled = 0;
+            item.doNumber = '';
+
+            saveAndRender();
+            showToast(`Item delivery record deleted and reset.`, 'warning');
+        }
+    };
+
     window.complete = (id) => {
         const idx = db.findIndex(i => i.id === id);
         if (idx > -1) {
@@ -1973,8 +2013,12 @@
                 const unitDisplay = m.unit ? ` <span style="font-size:0.75rem; color:#64748b;">${m.unit}</span>` : '';
 
                 const checkStatus = item.status === 'Pending'
-                    ? `<input type="checkbox" title="Mark Item Complete / Reset" class="med-check" style="width:18px; height:18px; cursor:pointer;" ${isChecked ? 'checked' : ''} onclick="handleCheck(event, ${item.id}, ${index})">`
+                    ? `<input type="checkbox" title="Mark Item Complete / Receive" class="med-check" style="width:18px; height:18px; cursor:pointer;" ${isChecked ? 'checked' : ''} onclick="handleCheck(event, ${item.id}, ${index})">`
                     : (isChecked ? `<span style="color:#10b981; font-weight:bold;" title="Completed">✓</span>` : `<span style="color:#ef4444;" title="Incomplete">✕</span>`);
+
+                const resetBtn = (item.status === 'Pending' && (m.fulfilled > 0 || isChecked))
+                    ? `<button class="btn-reset-item" title="Delete delivery record & reset" onclick="resetItem(event, ${item.id}, ${index})">🗑️</button>`
+                    : '';
 
                 return `
                     <tr>
@@ -1984,6 +2028,7 @@
                         <td class="in-gave">${(m.fulfilled || 0).toLocaleString()}${unitDisplay}</td>
                         <td class="in-bal"><span class="${balanceClass}">${balance.toLocaleString()}${unitDisplay}</span></td>
                         <td class="in-do">${doDisplay}</td>
+                        <td class="in-act">${resetBtn}</td>
                     </tr>
                 `;
             }).join('');
@@ -1999,6 +2044,7 @@
                                 <th class="in-gave">Gave</th>
                                 <th class="in-bal">Bal</th>
                                 <th class="in-do">D.O. #</th>
+                                <th class="in-act"></th>
                             </tr>
                         </thead>
                         <tbody>${medRowsHtml}</tbody>
