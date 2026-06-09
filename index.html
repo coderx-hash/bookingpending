@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PharmaTrack Pro v9.2 | Stock Balancing</title>
+    <title>PharmaTrack Pro v9.3 | Stock Balancing</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
         :root {
@@ -1072,7 +1072,7 @@
 
     <div class="header">
         <div>
-            <h1>PharmaTrack Pro v9.2</h1>
+            <h1>PharmaTrack Pro v9.3</h1>
             <p>Stock Balancing & General Ledger Management System</p>
         </div>
         <div class="header-controls">
@@ -1433,7 +1433,7 @@
         }
     };
 
-    // --- NEW: EDIT BRAND & ADD REMARKS ---
+    // --- UPDATED: EDIT BRAND & ADD REMARKS (WITH ORIGINAL NAME TRACKING) ---
     window.editMedicine = (id, medIndex) => {
         const idx = db.findIndex(i => i.id === id);
         if (idx === -1) return;
@@ -1441,12 +1441,16 @@
         const item = db[idx].medicines[medIndex];
 
         let newName = prompt(`Edit Brand/Item Name for "${item.name}":`, item.name);
-        if (newName === null) return; // User cancelled
+        if (newName === null) return; 
 
         let remarks = prompt(`Reason for changing or remarks for "${newName}":`, item.remarks || "");
-        if (remarks === null) return; // User cancelled
+        if (remarks === null) return; 
 
         if (newName.trim() !== "") {
+            // Save the very first name as originalName if not yet set
+            if (!item.originalName) {
+                item.originalName = item.name;
+            }
             item.name = newName.trim();
             item.remarks = remarks.trim();
             saveAndRender();
@@ -1473,7 +1477,6 @@
     let activeStaffFilter = null;
     let activeModalView = 'med';
 
-    // Helper: Calculate Days Pending based on GL Date (fallback to Creation Date)
     function calculateDaysPending(dateString) {
         if (!dateString) return 0;
         try {
@@ -1488,14 +1491,12 @@
         }
     }
 
-    // Date Time Display
     setInterval(() => {
         const now = new Date();
         const dtDisplay = document.getElementById('dateTimeDisplay');
         if(dtDisplay) dtDisplay.textContent = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
     }, 1000);
 
-    // --- TAB SWITCHER ---
     function switchTab(evt, tabId) {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1539,7 +1540,6 @@
         });
     }
 
-    // --- SUBMIT TRANSACTION INTERCEPT ---
     document.getElementById('mainForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const today = new Date().toISOString().split('T')[0];
@@ -1570,8 +1570,8 @@
             const u = row.querySelector('.med-unit').value || '';
             
             if (n && q > 0 && u) {
-                // ADDED: remarks field initialized as empty string
-                meds.push({ name: n, unit: u, qty: q, fulfilled: 0, checked: false, doNumber: '', remarks: '' });
+                // Initialize originalName as empty
+                meds.push({ name: n, originalName: '', unit: u, qty: q, fulfilled: 0, checked: false, doNumber: '', remarks: '' });
             }
         });
 
@@ -1616,7 +1616,6 @@
                 <button type="button" class="btn-remove-med" onclick="this.parentElement.remove()" style="visibility:hidden">×</button>
             </div>`;
         
-        // Notification & Focus Update
         showToast(`Transaction ${soNumVal} successfully added!`, 'success');
         document.getElementById('soNum').focus();
     }
@@ -1629,7 +1628,6 @@
         }
     }
 
-    // --- LOGIC: CHECKING & BALANCING ---
     window.handleCheck = (event, id, medIndex) => {
         event.preventDefault(); 
         const idx = db.findIndex(i => i.id === id);
@@ -1676,7 +1674,6 @@
         saveAndRender();
     };
 
-    // --- NEW LOGIC: RESET / DELETE ITEM DELIVERY ---
     window.resetItem = (event, id, medIndex) => {
         event.preventDefault();
         event.stopPropagation();
@@ -1721,7 +1718,6 @@
         }
     };
 
-    // --- QUEUE FILTERING ---
     window.filterByStaff = (staffKey) => {
         if (activeStaffFilter === staffKey) {
             activeStaffFilter = null;
@@ -1737,7 +1733,6 @@
         render();
     }
 
-    // --- JUMP TO TRANSACTION ---
     window.jumpToTransaction = (soNum) => {
         closeOverdueModal();
         switchTab(null, 'pending-tab');
@@ -1746,7 +1741,6 @@
         render();
     };
 
-    // --- URGENT ALERT MODAL LOGIC ---
     window.closeOverdueAlert = () => {
         document.getElementById('overdueAlertPopup').style.display = 'none';
     };
@@ -1756,7 +1750,6 @@
         openOverdueModal();
     };
 
-    // --- OVERDUE MODAL LOGIC ---
     window.openOverdueModal = () => {
         document.getElementById('overdueModal').style.display = 'flex';
         renderOverdueList();
@@ -1799,7 +1792,6 @@
     }
 
 
-    // --- MODAL LOGIC (TRIPLE VIEWS) ---
     window.openSummaryModal = () => {
         document.getElementById('summaryModal').style.display = 'flex';
         renderSummaryModal();
@@ -1967,7 +1959,6 @@
         });
     };
 
-    // --- MAIN RENDER ---
     function render() {
         const pendingBody = document.getElementById('pendingBody');
         const historyBody = document.getElementById('historyBody');
@@ -2045,9 +2036,23 @@
                 const doDisplay = m.doNumber ? `<span class="do-badge-pill">${m.doNumber}</span>` : `<span class="do-empty">--</span>`;
                 const unitDisplay = m.unit ? ` <span style="font-size:0.75rem; color:#64748b;">${m.unit}</span>` : '';
 
-                // ADDED: Display remarks and Edit Icon
-                const remarksHtml = m.remarks ? `<div style="font-size: 0.75rem; color: #d97706; font-style: italic; margin-top: 3px; line-height: 1.2; word-break: break-word;">📝 Remarks: ${m.remarks}</div>` : '';
-                const editIcon = item.status === 'Pending' ? `<span style="cursor:pointer; opacity:0.5; font-size:0.8rem; margin-left: 5px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.5'" title="Edit Brand/Remarks" onclick="editMedicine(${item.id}, ${index})">✏️</span>` : '';
+                const remarksHtml = m.remarks ? `<div style="font-size: 0.75rem; color: #d97706; font-style: italic; margin-top: 4px; line-height: 1.2; word-break: break-word;">📝 Remarks: ${m.remarks}</div>` : '';
+                const editIcon = item.status === 'Pending' ? `<span style="cursor:pointer; opacity:0.5; font-size:0.8rem; margin-left: 6px; display:inline-block;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.5'" title="Edit Brand/Remarks" onclick="editMedicine(${item.id}, ${index})">✏️</span>` : '';
+
+                // ADDED: Logic to display crossed out original name and checked new name
+                let nameDisplayHtml = "";
+                if (m.originalName && m.originalName !== m.name) {
+                    nameDisplayHtml = `
+                        <div style="text-decoration: line-through; color: var(--danger); font-size: 0.8rem; margin-bottom: 3px;">
+                            ❌ ${m.originalName}
+                        </div>
+                        <div style="font-weight: 600; color: var(--success); display: flex; align-items: center;">
+                            ✅ ${m.name} ${editIcon}
+                        </div>
+                    `;
+                } else {
+                    nameDisplayHtml = `<div style="font-weight: 500; color: var(--primary-dark); display: flex; align-items: center;">${m.name} ${editIcon}</div>`;
+                }
 
                 const checkStatus = item.status === 'Pending'
                     ? `<input type="checkbox" title="Mark Item Complete / Receive" class="med-check" style="width:18px; height:18px; cursor:pointer;" ${isChecked ? 'checked' : ''} onclick="handleCheck(event, ${item.id}, ${index})">`
@@ -2061,7 +2066,7 @@
                     <tr>
                         <td class="in-check">${checkStatus}</td>
                         <td class="in-item">
-                            <div style="font-weight: 500; color: var(--primary-dark);">${m.name}${editIcon}</div>
+                            ${nameDisplayHtml}
                             ${remarksHtml}
                         </td>
                         <td class="in-req">${m.qty.toLocaleString()}${unitDisplay}</td>
@@ -2150,7 +2155,6 @@
             }
         });
 
-        // EMPTY STATES UPDATES
         if (pendingCount === 0 && !textSearchVal) {
             pendingBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 50px 20px; color: var(--secondary); font-size: 1.1rem;">📭 No active transactions in the queue.</td></tr>`;
         } else if (pendingBody.innerHTML === '') {
@@ -2163,7 +2167,6 @@
             historyBody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 50px 20px; color: var(--secondary);">No history records match your search.</td></tr>`;
         }
 
-        // Trigger Alert popup ONLY once per load if there's overdue
         if (overdueCount > 0 && !hasShownOverdueAlert) {
             setTimeout(() => {
                 document.getElementById('overdueAlertPopup').style.display = 'flex';
