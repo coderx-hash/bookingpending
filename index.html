@@ -1433,6 +1433,27 @@
         }
     };
 
+    // --- NEW: EDIT BRAND & ADD REMARKS ---
+    window.editMedicine = (id, medIndex) => {
+        const idx = db.findIndex(i => i.id === id);
+        if (idx === -1) return;
+
+        const item = db[idx].medicines[medIndex];
+
+        let newName = prompt(`Edit Brand/Item Name for "${item.name}":`, item.name);
+        if (newName === null) return; // User cancelled
+
+        let remarks = prompt(`Reason for changing or remarks for "${newName}":`, item.remarks || "");
+        if (remarks === null) return; // User cancelled
+
+        if (newName.trim() !== "") {
+            item.name = newName.trim();
+            item.remarks = remarks.trim();
+            saveAndRender();
+            showToast('Item brand and remarks updated!', 'success');
+        }
+    };
+
     // --- INTRO SCREEN LOGIC ---
     let hasShownOverdueAlert = false;
 
@@ -1549,7 +1570,8 @@
             const u = row.querySelector('.med-unit').value || '';
             
             if (n && q > 0 && u) {
-                meds.push({ name: n, unit: u, qty: q, fulfilled: 0, checked: false, doNumber: '' });
+                // ADDED: remarks field initialized as empty string
+                meds.push({ name: n, unit: u, qty: q, fulfilled: 0, checked: false, doNumber: '', remarks: '' });
             }
         });
 
@@ -2023,6 +2045,10 @@
                 const doDisplay = m.doNumber ? `<span class="do-badge-pill">${m.doNumber}</span>` : `<span class="do-empty">--</span>`;
                 const unitDisplay = m.unit ? ` <span style="font-size:0.75rem; color:#64748b;">${m.unit}</span>` : '';
 
+                // ADDED: Display remarks and Edit Icon
+                const remarksHtml = m.remarks ? `<div style="font-size: 0.75rem; color: #d97706; font-style: italic; margin-top: 3px; line-height: 1.2; word-break: break-word;">📝 Remarks: ${m.remarks}</div>` : '';
+                const editIcon = item.status === 'Pending' ? `<span style="cursor:pointer; opacity:0.5; font-size:0.8rem; margin-left: 5px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.5'" title="Edit Brand/Remarks" onclick="editMedicine(${item.id}, ${index})">✏️</span>` : '';
+
                 const checkStatus = item.status === 'Pending'
                     ? `<input type="checkbox" title="Mark Item Complete / Receive" class="med-check" style="width:18px; height:18px; cursor:pointer;" ${isChecked ? 'checked' : ''} onclick="handleCheck(event, ${item.id}, ${index})">`
                     : (isChecked ? `<span style="color:#10b981; font-weight:bold;" title="Completed">✓</span>` : `<span style="color:#ef4444;" title="Incomplete">✕</span>`);
@@ -2034,7 +2060,10 @@
                 return `
                     <tr>
                         <td class="in-check">${checkStatus}</td>
-                        <td class="in-item" title="${m.name}">${m.name}</td>
+                        <td class="in-item">
+                            <div style="font-weight: 500; color: var(--primary-dark);">${m.name}${editIcon}</div>
+                            ${remarksHtml}
+                        </td>
                         <td class="in-req">${m.qty.toLocaleString()}${unitDisplay}</td>
                         <td class="in-gave">${(m.fulfilled || 0).toLocaleString()}${unitDisplay}</td>
                         <td class="in-bal"><span class="${balanceClass}">${balance.toLocaleString()}${unitDisplay}</span></td>
@@ -2074,7 +2103,6 @@
             const glDateHtml = item.glDate ? `<span class="gl-date-meta">GL Date: ${item.glDate}</span>` : '';
             const overduePillHtml = isOverdue ? `<span class="overdue-pill">⚠️ ${daysPending} Days Pending</span>` : '';
 
-            // ADDED: The S.O. container with an edit pencil icon here
             if (item.status === 'Pending') {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
