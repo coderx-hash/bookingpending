@@ -677,42 +677,49 @@
 
         /* Fixed Inner Table Widths & Alignments */
         table.inner-table th.in-check, table.inner-table td.in-check { width: 5%; text-align: center; }
-        /* Added padding-right so the edit icon isn't too close to the Req column */
-        table.inner-table th.in-item, table.inner-table td.in-item { width: 35%; text-align: left; padding-right: 20px; }
-        table.inner-table th.in-req, table.inner-table td.in-req { width: 12%; text-align: center; }
-        table.inner-table th.in-gave, table.inner-table td.in-gave { width: 12%; text-align: center; }
-        table.inner-table th.in-bal, table.inner-table td.in-bal { width: 12%; text-align: center; }
-        table.inner-table th.in-do, table.inner-table td.in-do { width: 16%; text-align: center; }
+        table.inner-table th.in-item, table.inner-table td.in-item { width: 31%; text-align: left; padding-right: 10px; }
+        table.inner-table th.in-req, table.inner-table td.in-req { width: 10%; text-align: center; white-space: nowrap; }
+        table.inner-table th.in-gave, table.inner-table td.in-gave { width: 10%; text-align: center; white-space: nowrap; }
+        table.inner-table th.in-bal, table.inner-table td.in-bal { width: 15%; text-align: center; white-space: nowrap; } 
+        table.inner-table th.in-do, table.inner-table td.in-do { width: 21%; text-align: center; padding: 0 5px;} 
         table.inner-table th.in-act, table.inner-table td.in-act { width: 8%; text-align: center; }
         
         /* Logic Badges */
         .balance-alert {
+            display: inline-block;
             color: #dc2626;
             font-weight: 700;
             background: #fee2e2;
-            padding: 2px 6px;
+            padding: 3px 6px;
             border-radius: 4px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             user-select: none;
+            text-align: center;
         }
         .balance-ok {
+            display: inline-block;
             color: #10b981;
             font-weight: 700;
             background: #dcfce7;
-            padding: 2px 6px;
+            padding: 3px 6px;
             border-radius: 4px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             user-select: none;
+            text-align: center;
         }
         .do-badge-pill {
+            display: inline-block;
             background: white;
             border: 1px solid #cbd5e1;
             color: #475569;
-            padding: 3px 8px;
+            padding: 4px 8px;
             border-radius: 4px;
             font-size: 0.8rem;
             font-family: monospace;
             user-select: text;
+            word-break: break-word;
+            text-align: center;
+            max-width: 100%;
         }
         .do-empty {
             color: #cbd5e1;
@@ -728,6 +735,7 @@
             border: none;
             width: 28px;
             height: 28px;
+            min-width: 28px;
             border-radius: 4px;
             cursor: pointer;
             display: inline-flex;
@@ -735,6 +743,7 @@
             justify-content: center;
             transition: 0.2s;
             font-size: 0.95rem;
+            flex-shrink: 0;
         }
         .btn-reset-item:hover {
             background: #fecaca;
@@ -2038,7 +2047,7 @@
                 const balance = m.qty - (m.fulfilled || 0);
                 const balanceClass = balance > 0 ? 'balance-alert' : 'balance-ok';
                 const doDisplay = m.doNumber ? `<span class="do-badge-pill">${m.doNumber}</span>` : `<span class="do-empty">--</span>`;
-                const unitDisplay = m.unit ? ` <span style="font-size:0.75rem; color:#64748b;">${m.unit}</span>` : '';
+                const unitDisplay = m.unit ? `<span style="display:inline-block; font-size:0.75rem; color:#64748b; margin-left:4px;">${m.unit}</span>` : '';
 
                 const remarksHtml = m.remarks ? `<div style="font-size: 0.75rem; color: #d97706; font-style: italic; margin-top: 4px; line-height: 1.2; word-break: break-word;">📝 Remarks: ${m.remarks}</div>` : '';
                 
@@ -2080,9 +2089,9 @@
                             ${nameDisplayHtml}
                             ${remarksHtml}
                         </td>
-                        <td class="in-req">${m.qty.toLocaleString()}${unitDisplay}</td>
-                        <td class="in-gave">${(m.fulfilled || 0).toLocaleString()}${unitDisplay}</td>
-                        <td class="in-bal"><span class="${balanceClass}">${balance.toLocaleString()}${unitDisplay}</span></td>
+                        <td class="in-req" style="white-space: nowrap;">${m.qty.toLocaleString()}${unitDisplay}</td>
+                        <td class="in-gave" style="white-space: nowrap;">${(m.fulfilled || 0).toLocaleString()}${unitDisplay}</td>
+                        <td class="in-bal" style="white-space: nowrap;"><span class="${balanceClass}">${balance.toLocaleString()}</span>${unitDisplay}</td>
                         <td class="in-do">${doDisplay}</td>
                         <td class="in-act">${resetBtn}</td>
                     </tr>
